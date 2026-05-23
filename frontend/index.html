@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon AI Hair Styling Recommendation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .form-section, .results-section {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .image-upload {
+            border: 2px dashed #ccc;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .image-upload:hover {
+            border-color: #667eea;
+            background: #f0f7ff;
+        }
+
+        .image-upload.dragover {
+            border-color: #667eea;
+            background: #e6f0ff;
+            transform: scale(1.02);
+        }
+
+        .image-preview {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .recommendation-card {
+            border: 1px solid #eee;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+        }
+
+        .rec-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .rec-header h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+        }
+
+        .rec-score {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .rec-body {
+            padding: 25px;
+        }
+
+        .rec-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .rec-list {
+            margin: 15px 0;
+        }
+
+        .rec-list h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .rec-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .rec-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .rec-list li:last-child {
+            border-bottom: none;
+        }
+
+        .rec-list li strong {
+            color: #555;
+        }
+
+        .analysis-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            border-left: 4px solid #667eea;
+        }
+
+        .analysis-details h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .analysis-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .analysis-item:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-item label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .analysis-item span {
+            font-weight: 500;
+            color: #333;
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            background: #e9ecef;
+            color: #495057;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            display: none;
+        }
+
+        .loading .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .form-section, .results-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Salon AI Stylist</h1>
+            <p>Get personalized hair styling recommendations based on your photo</p>
+        </header>
+
+        <div class="form-section">
+            <div class="form-group">
+                <label for="height">Your Height (cm)</label>
+                <input type="number" id="height" placeholder="Enter your height in cm" min="100" max=None>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Your Photo</label>
+                <div class="image-upload" id="imageUpload">
+                    <p>Click to upload or drag & drop your photo</p>
+                    <p><small>Supported formats: JPG, PNG</small></p>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                </div>
+                <img id="imagePreview" class="image-preview" alt="Preview">
+            </div>
+
+            <button class="btn" id="analyzeBtn" disabled>
+                <span>Analyze & Get Recommendations</span>
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your photo with Gemini Flash 2.5...</p>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h2>Your Personalized Recommendations</h2>
+            <div class="results-grid" id="recommendationsGrid"></div>
+
+            <div class="analysis-details">
+                <h3>Detected Features from Your Photo</h3>
+                <div class="analysis-item">
+                    <label>Gender:</label>
+                    <span id="detected-gender"></span>
+                    <span class="confidence-badge" id="gender-confidence"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Face Shape:</label>
+                    <span id="detected-face-shape"></span>
+                    <span class="confidence-badge" id="face-confidence"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Hair Type:</label>
+                    <span id="detected-hair-type"></span>
+                    <span class="confidence-badge" id="hair-confidence"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Hair Length:</label>
+                    <span id="detected-hair-length"></span>
+                    <span class="confidence-badge" id="hair-length-confidence"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Skin Tone:</label>
+                    <span id="detected-skin-tone"></span>
+                    <span class="confidence-badge" id="skin-confidence"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Undertone:</label>
+                    <span id="detected-undertone"></span>
+                    <span class="confidence-badge" id="undertone-confidence"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Ethnicity:</label>
+                    <span id="detected-ethnicity"></span>
+                    <span class="confidence-badge" id="ethnicity-confidence"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Height:</label>
+                    <span id="detected-height"></span>
+                </div>
+                <div class="analysis-item">
+                    <label>Analysis Engine:</label>
+                    <span id="analysis-engine">Gemini Flash 2.5</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const recommendationsGrid = document.getElementById('recommendationsGrid');
+
+        // Detected features display
+        const detectedGender = document.getElementById('detected-gender');
+        const genderConfidence = document.getElementById('gender-confidence');
+        const detectedFaceShape = document.getElementById('detected-face-shape');
+        const detectedHairType = document.getElementById('detected-hair-type');
+        const detectedHairLength = document.getElementById('detected-hair-length');
+        const detectedSkinTone = document.getElementById('detected-skin-tone');
+        const detectedUndertone = document.getElementById('detected-undertone');
+        const detectedEthnicity = document.getElementById('detected-ethnicity');
+        const detectedHeight = document.getElementById('detected-height');
+        const faceConfidence = document.getElementById('face-confidence');
+        const hairConfidence = document.getElementById('hair-confidence');
+        const hairLengthConfidence = document.getElementById('hair-length-confidence');
+        const skinConfidence = document.getElementById('skin-confidence');
+        const undertoneConfidence = document.getElementById('undertone-confidence');
+        const ethnicityConfidence = document.getElementById('ethnicity-confidence');
+        const analysisEngine = document.getElementById('analysis-engine');
+
+        let selectedImage = null;
+
+        // Image upload handling
+        imageUpload.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUpload.classList.add('dragover');
+        });
+
+        imageUpload.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            imageUpload.classList.remove('dragover');
+        });
+
+        imageUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUpload.classList.remove('dragover');
+
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageFile(file);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageFile(file);
+            }
+        });
+
+        function handleImageFile(file) {
+            selectedImage = file;
+
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+
+            // Update UI
+            imageUpload.innerHTML = `<p>✓ Image selected</p><p><small>${file.name}</small></p>`;
+
+            // Enable analyze button if we have image and height will be checked separately
+            validateForm();
+        }
+
+        // Form validation - only need height and image
+        const heightInput = document.getElementById('height');
+
+        heightInput.addEventListener('input', validateForm);
+        imageInput.addEventListener('change', validateForm);
+
+        function validateForm() {
+            const hasImage = selectedImage !== null;
+            const hasHeight = heightInput.value.trim() !== '' && !isNaN(parseFloat(heightInput.value));
+
+            if (hasImage && hasHeight) {
+                analyzeBtn.disabled = false;
+            } else {
+                analyzeBtn.disabled = true;
+            }
+        }
+
+        // Analysis button click
+        analyzeBtn.addEventListener('click', async () => {
+            if (analyzeBtn.disabled) return;
+
+            // Show loading
+            loading.style.display = 'block';
+            resultsSection.style.display = 'none';
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<span>Analyzing...</span>';
+
+            try {
+                // Prepare form data - ONLY height from user input
+                const formData = new FormData();
+                formData.append('file', selectedImage);
+
+                const height = heightInput.value;
+                if (height) formData.append('height', height);
+
+                // Send request to backend
+                const response = await fetch('http://localhost:8000/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Analysis failed: ' + error.message);
+            } finally {
+                // Hide loading and reset button
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<span>Analyze & Get Recommendations</span>';
+            }
+        });
+
+        function displayResults(result) {
+            // Hide loading, show results
+            loading.style.display = 'none';
+            resultsSection.style.display = 'block';
+
+            // Clear previous results
+            recommendationsGrid.innerHTML = '';
+
+            // Update detected features display with confidences
+            const genderAnalysis = result.analysis_details.gender_analysis || { detected_gender: result.analysis_details.client_attributes.gender || 'female', confidence: 0.8 };
+            const faceAnalysis = result.analysis_details.face_analysis;
+            const hairAnalysis = result.analysis_details.hair_analysis;
+            const skinAnalysis = result.analysis_details.skin_analysis;
+            const height = result.analysis_details.client_attributes.height;
+
+            // Gender
+            detectedGender.textContent = capitalizeFirstLetter(genderAnalysis.detected_gender);
+            genderConfidence.textContent = `${Math.round(genderAnalysis.confidence * 100)}%`;
+            genderConfidence.title = `Confidence: ${genderAnalysis.confidence.toFixed(2)}`;
+
+            // Face shape
+            detectedFaceShape.textContent = capitalizeFirstLetter(faceAnalysis.detected_shape);
+            faceConfidence.textContent = `${Math.round(faceAnalysis.confidence * 100)}%`;
+            faceConfidence.title = `Confidence: ${faceAnalysis.confidence.toFixed(2)}`;
+
+            // Hair type and length
+            detectedHairType.textContent = capitalizeFirstLetter(hairAnalysis.detected_type);
+            hairConfidence.textContent = `${Math.round(hairAnalysis.confidence * 100)}%`;
+            hairConfidence.title = `Confidence: ${hairAnalysis.confidence.toFixed(2)}`;
+
+            // Hair length
+            detectedHairLength.textContent = capitalizeFirstLetter(hairAnalysis.detected_length);
+            hairLengthConfidence.textContent = `${Math.round(hairAnalysis.confidence * 100)}%`;
+            hairLengthConfidence.title = `Confidence: ${hairAnalysis.confidence.toFixed(2)}`;
+
+            // Skin tone and undertone
+            detectedSkinTone.textContent = capitalizeFirstLetter(skinAnalysis.detected_tone);
+            skinConfidence.textContent = `${Math.round(skinAnalysis.confidence * 100)}%`;
+            skinConfidence.title = `Confidence: ${skinAnalysis.confidence.toFixed(2)}`;
+
+            detectedUndertone.textContent = capitalizeFirstLetter(skinAnalysis.detected_undertone);
+            undertoneConfidence.textContent = `${Math.round(skinAnalysis.confidence * 100)}%`;
+            undertoneConfidence.title = `Confidence: ${skinAnalysis.confidence.toFixed(2)}`;
+
+            const ethnicityAnalysis = result.analysis_details.ethnicity_analysis || { detected_ethnicity: 'N/A', confidence: 0.8 };
+            if (detectedEthnicity) {
+                detectedEthnicity.textContent = capitalizeFirstLetter(ethnicityAnalysis.detected_ethnicity);
+            }
+            if (ethnicityConfidence) {
+                ethnicityConfidence.textContent = `${Math.round(ethnicityAnalysis.confidence * 100)}%`;
+                ethnicityConfidence.title = `Confidence: ${ethnicityAnalysis.confidence.toFixed(2)}`;
+            }
+
+            // Height
+            detectedHeight.textContent = height ? `${height} cm` : 'Not provided';
+
+            // Analysis engine
+            analysisEngine.textContent = (genderAnalysis.notes && genderAnalysis.notes.includes("Vertex")) ? "Vertex AI Gemini 1.5" : "Gemini Flash 2.5";
+
+            // Add recommendations
+            result.recommendations.forEach(rec => {
+                const card = document.createElement('div');
+                card.className = 'recommendation-card';
+
+                // Determine visualization display
+                let vizHTML = '';
+                if (rec.visualization_url) {
+                    if (rec.visualization_url.startsWith('data:text/plain;base64,')) {
+                        // Text-based visualization - show as description
+                        const desc = atob(rec.visualization_url.split(',')[1]);
+                        vizHTML = `<div style="width: 100%; height: 180px; background: #f8f9fa; display: flex;
+                                    align-items: center; justify-content: center; border-radius: 10px;
+                                    color: #666; font-style: italic; text-align: center; padding: 15px;
+                                    box-sizing: border-box; line-height: 1.4;">
+                                    ${desc.replace(/\n/g, '<br>')}
+                                </div>`;
+                    } else {
+                        // Image-based visualization
+                        vizHTML = `<img src="${rec.visualization_url}" alt="${rec.style_name} visualization"
+                                     style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                                     object-fit: cover; width: 100%; height: 180px;">`;
+                    }
+                } else {
+                    vizHTML = `<div style="width: 100%; height: 180px; background: #f0f0f0; display: flex;
+                                align-items: center; justify-content: center; border-radius: 10px;
+                                color: #666; font-style: italic;">
+                                Visualization not available
+                            </div>`;
+                }
+
+                // Determine video display
+                let videoHTML = '';
+                if (rec.video_url) {
+                    videoHTML = `
+                        <div class="rec-video-container" style="margin-top: 15px; margin-bottom: 15px; text-align: center;">
+                            <h4 style="margin-bottom: 8px; font-size: 0.95rem; color: #555; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;">
+                                🎬 3D Runway Walk try-on (Veo)
+                            </h4>
+                            <video src="${rec.video_url}" controls autoplay loop muted playsinline
+                                   style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                                   width: 100%; height: 220px; object-fit: cover; background: #000; display: block;">
+                            </video>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="rec-header">
+                        <h3>${rec.style_name}</h3>
+                        <span class="rec-score">${rec.suitability_score.toFixed(0)}% Match</span>
+                    </div>
+                    <div class="rec-body">
+                        <div class="rec-image-container" style="margin-bottom: 15px; text-align: center;">
+                            ${vizHTML}
+                        </div>
+                        ${videoHTML}
+                        <p class="rec-description">${rec.description}</p>
+
+                        <div class="rec-list">
+                            <h4>Why this works for you:</h4>
+                            <ul>
+                                ${rec.reasoning.map(reason => `<li>${reason}</li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="rec-list">
+                            <h4>Maintenance Tips:</h4>
+                            <ul>
+                                ${rec.maintenance_tips.map(tip => `<li>${tip}</li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="rec-list">
+                            <h4>Recommended Products:</h4>
+                            <ul>
+                                ${rec.products_needed.map(product => `<li>${product}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                recommendationsGrid.appendChild(card);
+            });
+        }
+
+        function capitalizeFirstLetter(string) {
+            if (!string) return string;
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+    </script>
+</body>
+</html>

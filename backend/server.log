@@ -1,0 +1,112 @@
+INFO:     Started server process [49789]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+DEBUG: Environment variables loaded
+DEBUG: USE_VERTEX_AI=True, VERTEX_AI_PROJECT=salaipoc, VERTEX_AI_LOCATION=us-central1
+✓ Unified google-genai client initialized for Vertex AI project salaipoc in us-central1
+✓ Mounted frontend directory from /Users/abhishek/Downloads/experiments/salon-ai-recommendation/frontend
+INFO:     127.0.0.1:56427 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /frontend/index.html HTTP/1.1" 304 Not Modified
+DEBUG: Sending combined analysis and recommendation prompt to Vertex AI
+DEBUG: Initializing Vertex AI client for region: us-central1
+DEBUG: Trying Vertex AI model: gemini-2.5-flash in region: us-central1
+DEBUG: Model gemini-2.5-flash in region us-central1 failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/verte...
+DEBUG: Trying Vertex AI model: gemini-3.5-flash in region: us-central1
+DEBUG: Model gemini-3.5-flash in region us-central1 failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'Publisher Model `projects/salaipoc/locations/us-central1/publishers/google/models/gemini-3.5-flash`...
+DEBUG: Trying Vertex AI model: gemini-2.0-flash-001 in region: us-central1
+DEBUG: Model gemini-2.0-flash-001 in region us-central1 failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'Publisher Model `projects/salaipoc/locations/us-central1/publishers/google/models/gemini-2.0-flash-...
+DEBUG: Trying Vertex AI model: gemini-2.5-pro in region: us-central1
+DEBUG: Successfully used Vertex AI model: gemini-2.5-pro in region: us-central1
+DEBUG: Raw response text: {
+    "analysis": {
+        "gender": "female",
+        "gender_confidence": 0.99,
+        "face_shape": "oval",
+        "face_confidence": 0.85,
+        "hair_type": "wavy",
+        "hair_confidence": 0.80,
+        "hair_length": "long",
+        "skin_tone": "medium",
+        "skin_confidence": 0.90,
+        "undertone": "warm",
+        "ethnicity": "South Asian",
+        "ethnicity_confidence": 0.95,
+        "notes": "The client has long, dark hair that appears to be type 2a wavy, although it is styled relatively straight. Her hair seems a bit flat at the roots and could benefit from added volume and shape. Her oval face shape is very versatile. Her current side part is suitable, but a center part or different framing could also be explored to enhance her features."
+    },
+    "recommendations": [
+        {
+            "style_name": "Long Layers with Face-Framing",
+            "description": "This hairstyle maintains the current long length while incorporating soft, cascading layers throughout to create movement, remove weight, and add volume. The style is complemented by shorter, face-framing pieces starting around the chin or cheekbones to soften the look and draw attention to the eyes.",
+            "suitability_score": 95.0,
+            "reasoning": [
+                "The layers and face-framing pieces will beautifully complement the client's versatile oval face shape without adding unnecessary width.",
+                "This cut is ideal for her long, slightly wavy hair, as it will prevent the ends from looking heavy and will encourage natural texture and volume.",
+                "This is a classic and highly popular style for South Asian women with long dark hair, offering a modern yet timeless look."
+            ],
+            "maintenance_tips": [
+                "Get a trim every 8-10 weeks to keep the layers fresh and prevent split ends.",
+                "Use a round brush when blow-drying to create volume at the roots and shape the face-framing layers."
+            ],
+            "products_needed": [
+                "Volumizing mousse",
+                "Heat protectant spray",
+                "Light-hold finishing spray"
+            ]
+        },
+        {
+            "style_name": "Curtain Bangs with Soft Waves",
+            "description": "A trendy and flattering style featuring long, center-parted bangs that sweep to the sides like curtains, blending seamlessly into the rest of the long hair. The hair is styled with soft, loose waves to create a romantic, effortless look. The bangs are cut to a length that highlights the cheekbones.",
+            "suitability_score": 92.0,
+            "reasoning": [
+                "Curtain bangs are exceptionally flattering on an oval face, as they open up the face and draw focus to the eyes.",
+                "This style is perfectly achievable with her current long hair and enhances her natural wavy texture, giving it a modern, styled appearance.",
+                "This is a globally trending hairstyle that looks particularly stunning on dark hair, providing a soft contrast and framing."
+            ],
+            "maintenance_tips": [
+                "Bangs require more frequent trims, typically every 4-6 weeks, to maintain their shape.",
+                "Style the bangs daily with a round brush or a blow-dryer to ensure they sweep away from the face correctly."
+            ],
+            "products_needed": [
+                "Texturizing spray or sea salt spray",
+                "Dry shampoo (for root lift and refreshing bangs)",
+                "Large-barrel curling iron or wand"
+            ]
+        },
+        {
+            "style_name": "Warm Toned Balayage on Layered Hair",
+            "description": "This is a color and cut combination. It involves adding a subtle, hand-painted balayage with warm tones like caramel, honey, or milk chocolate onto a long, layered haircut. The color is strategically placed to create depth and dimension, making the hair look fuller and shinier without a harsh root line.",
+            "suitability_score": 88.0,
+            "reasoning": [
+                "The warm balayage tones will gorgeously complement her medium skin tone and warm undertones, adding brightness to her complexion.",
+                "The combination of balayage and layers adds immense visual interest and dimension to long hair, making her natural waves pop and giving the illusion of thicker hair.",
+                "This color technique is very popular for naturally dark South Asian hair as it provides a beautiful, sun-kissed effect with lower maintenance than traditional highlights."
+            ],
+            "maintenance_tips": [
+                "Use a sulfate-free, color-safe shampoo and conditioner to prevent color from fading.",
+                "Incorporate a weekly deep-conditioning mask to keep the lightened sections of hair healthy and hydrated."
+            ],
+            "products_needed": [
+                "Color-safe shampoo and conditioner",
+                "Nourishing hair mask",
+                "Shine serum or oil"
+            ]
+        }
+    ]
+}
+DEBUG: Sending edit_image request for hairstyle: Long Layers with Face-Framing
+DEBUG: Successfully edited hairstyle using Imagen editing model
+DEBUG: Triggering Veo video generation for top style: Long Layers with Face-Framing
+DEBUG: Generated prompt for Veo Video: 
+    A professional fashion model (matching gender: female, of South Asian ethnicity, with medium skin tone)
+    wearing a Long Layers with Face-Framing hairstyle (This hairstyle maintains the current long length while incorporating soft, cascading layers throughout to create movement, remove weight, and add volume. The style is complemented by shorter, face-framing pieces starting around the chin or cheekbones to soften the look and draw attention to the eyes.) walking on a runway ramp.
+    Professional studio lighting, fashion show runway backdrop, detailed hair texture and motion, realistic walk.
+    
+DEBUG: Initiating video generation with Veo model: veo-2.0-generate-001
+DEBUG: Waiting for video generation operation to complete...
+DEBUG: Veo Video generation complete for model: veo-2.0-generate-001
+DEBUG: Sending edit_image request for hairstyle: Curtain Bangs with Soft Waves
+DEBUG: Successfully edited hairstyle using Imagen editing model
+DEBUG: Sending edit_image request for hairstyle: Warm Toned Balayage on Layered Hair
+DEBUG: Successfully edited hairstyle using Imagen editing model
+INFO:     127.0.0.1:56433 - "POST /analyze HTTP/1.1" 200 OK
