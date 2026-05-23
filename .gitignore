@@ -5,3 +5,4 @@ venv/
 .claude/
 ~/.claude/
 .gemini/
+~/backend/vertex-ai-key.json

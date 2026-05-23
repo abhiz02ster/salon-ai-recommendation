@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "salaipoc",
+  "private_key_id": "df29cf3e035a36c3c471751ea16e9a05cd7b1e52",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDfDmQYHlxIxtZx\niHVXYBHa6Umf4+n3sBtt2Bl973NrAQ/msj/eeN2Lc3Cf2nP7VS4werC8qBOHUcLc\nc5lEmJYy24mzZHt5Bbv0yVgjtcYZiGelqyX7W70t/p2mKI3Es17cNKO48lH21T70\n/SqJxE9shsKY7ks4srj6/vsg33LdnWv3Z+tyP/1ZD7wB0YgI9i98RogHWXIpbIWN\nZzG2trN7sxCRe4wFWv7L9wzZoZndUyRi8jeXMOrfeuwHhXHTUW27EeIwiwXDKiXv\nc6LelTHDL5XkCCmGdywNaV+0dwuRqzcza90k0XIRszFsZcpXmfdWMLxYQPxhYTYP\noI2wE/VJAgMBAAECggEABzM8OOkV+oVsm6qXexQPT30zUrV1MnkdUYzlucJ2e9BD\ndqNvW1uUbzFxQ7+1+bl0rbzwIo7cXoRdoWcb3fJ8+rRKfB90uuHcANlU/oYaGG3m\nRptBNR1vfGIZLalmdiCCIeKTHF+6FJkqmJbpfhv3ol2xP2WFyRU/0l5Ttepwl0Wz\nq51yZ2hrHFqc/ph9GVfWRS9RLTNzERlT18VXLEjYzG4i+a8ct2tu40re3R7dJA/y\nJ4AC3uI40xOf/h8I7AmoQx8SjfC8k9v0LyHqqWqGs6bFfJoNd0Cjv9EKXpEYF8Oh\n/ieAUnwLvvZApmrkB6sB7wCq6jhlNLB3ihR+tPTgBwKBgQD4cXYbBcPYxbbx9rlV\nfYZFinUht6WCmSP8uFL98yDG0ujxiAILwnD0e5BubY7mzvP9g2kgKE9OmAxGi3HS\n6SjXcPBzfo/Vx8fNZC4XlDeSpNeOlVgdKrZUb0wi5GzU679uzFVhtgmwAeUeBHjG\nKT4furVAS4z4DRRcKLrrR/7OfwKBgQDl10ALvK019+Fef8/uEo3pN0SelFyX8gNS\nqvHXekAOglDRjQDszg820aujFQnGAN5PDjnYN6DYFUduJxALsf/kEPj+Rh/piqh3\ngzZSUHQ8iHlpOJkrPW1YE6RTENiUVAeGHTYCLkwOa0o4WrsLfsQz0SOE5aOwdUFE\nU3Cz1o5oNwKBgGTbQrPzoi7lDMCrhU90VsbyT1yxveoHmzlj5qUbRyoPwusSaKo3\ndD170AVUSpfeWeSHrWyVkKR6Szl0MHALoT3cpnBsZ53ErZLu4VtHG0xXyP4kGJI2\nnbAnQoRDsP66+YrUPrEdAk/GZSnLbPAdHBArbps8UGz+ek5zZnZPUtynAoGAEEwV\n/38ObSA5e8DmVoQ8ScggdnogoqmHcMosQdIqTp0Q6/rqkN//liyB1ht8yOxw1vw0\nP8+Z+RhxKy9b5OhnM528ehMw2hd54JeON4H66/vlV/+qZLWDVlZ2NWmhYcsfiXPy\ny27K987FwX81ehgwA1iWAythUvbNfPHJsQbKrDsCgYAZVuDdJH7AJTA61ISwq0EQ\nuUpxyqloYHXDf+9NUZj8Bdq1y1i9+7jwFVER9UDI7X+UMgiD720PydpXNBVrAvUc\nDmDhk4DrtTfuzeJMmXGAvhJ9PwuHgnoi0XitKQef5FxaQ0Vd62uISh5m2Q/BrTLf\njP+/GxE0r2Q9ljI0Equd5A==\n-----END PRIVATE KEY-----\n",
+  "client_email": "salonai-sa@salaipoc.iam.gserviceaccount.com",
+  "client_id": "116824286984205185678",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/salonai-sa%40salaipoc.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
