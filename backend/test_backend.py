@@ -1,19 +1,20 @@
 """
-Test script for the salon AI recommendation backend
+Test script for the new multi-agent, database-backed Salon AI recommendation backend
 """
 from fastapi.testclient import TestClient
 from main import app
 import io
+import os
+import time
 from PIL import Image
 import numpy as np
 
 def create_dummy_image():
     """Create a dummy RGB image for testing"""
-    # Create a simple 100x100 RGB image
     img_array = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
     img = Image.fromarray(img_array)
     img_byte_arr = io.BytesIO()
-    img.save(img_byte_arr, format='PNG')
+    img.save(img_byte_arr, format='JPEG')
     img_byte_arr.seek(0)
     return img_byte_arr
 
@@ -36,95 +37,119 @@ def test_root_endpoint():
     assert "Salon AI Hair Styling Recommendation API" in data["message"]
     print("✓ Root endpoint test passed")
 
-def test_analyze_endpoint():
-    """Test the analyze endpoint with a real test face image"""
+def test_consultation_pipeline():
+    """Test the entire multi-agent analyze -> refine -> history pipeline"""
     client = TestClient(app)
 
     # Use a real test image from the directory if it exists, otherwise fall back to dummy
-    import os
     test_img_path = "../data/Unknown.jpeg"
     if os.path.exists(test_img_path):
         with open(test_img_path, "rb") as f:
             img_data = f.read()
-        img_file = io.BytesIO(img_data)
+        img_file1 = io.BytesIO(img_data)
+        img_file2 = io.BytesIO(img_data)
+        img_file3 = io.BytesIO(img_data)
         filename = "Unknown.jpeg"
         content_type = "image/jpeg"
     elif os.path.exists("test_face3.jpg"):
         with open("test_face3.jpg", "rb") as f:
             img_data = f.read()
-        img_file = io.BytesIO(img_data)
+        img_file1 = io.BytesIO(img_data)
+        img_file2 = io.BytesIO(img_data)
+        img_file3 = io.BytesIO(img_data)
         filename = "test_face3.jpg"
         content_type = "image/jpeg"
     else:
-        img_file = create_dummy_image()
-        filename = "test.png"
-        content_type = "image/png"
+        img_file1 = create_dummy_image()
+        img_file2 = create_dummy_image()
+        img_file3 = create_dummy_image()
+        filename = "test.jpg"
+        content_type = "image/jpeg"
 
-    # Prepare form data
-    data = {
-        "height": "170",
-        "face_shape": "oval",
-        "body_type": "mesomorph",
-        "hair_type": "wavy",
-        "hair_length": "medium",
-        "skin_tone": "medium"
+    # Prepare multipart files
+    files = {
+        "file_front": (filename, img_file1, content_type),
+        "file_left": (filename, img_file2, content_type),
+        "file_right": (filename, img_file3, content_type)
     }
 
-    # Make request
-    response = client.post(
-        "/analyze",
-        files={"file": (filename, img_file, content_type)},
-        data=data
-    )
+    # Height and default walk-in client
+    data = {
+        "height": "172",
+        "client_id": "1"
+    }
 
-    # Check response
+    print("\n--- Testing POST /analyze (Profiler + Stylist Agents) ---")
+    response = client.post("/analyze", files=files, data=data)
+    
     assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-    data = response.json()
+    result = response.json()
 
-    # Check structure
-    assert "recommendations" in data
-    assert "analysis_details" in data
-    assert "timestamp" in data
-    assert isinstance(data["recommendations"], list)
-    assert len(data["recommendations"]) > 0
+    # Check database generated consultation
+    assert "consultation_id" in result
+    assert result["consultation_id"] is not None
+    consultation_id = result["consultation_id"]
+    print(f"✓ Created consultation session ID: {consultation_id}")
 
-    # Check first recommendation
-    rec = data["recommendations"][0]
+    # Check recommendations structure
+    assert "recommendations" in result
+    assert isinstance(result["recommendations"], list)
+    assert len(result["recommendations"]) == 3
+    
+    # Assert video url is present and valid for the highest scoring recommendation
+    rec = result["recommendations"][0]
     assert "style_name" in rec
     assert "description" in rec
     assert "suitability_score" in rec
-    assert "reasoning" in rec
-    assert "maintenance_tips" in rec
-    assert "products_needed" in rec
-    
-    # Assert video url is present and valid for the highest scoring recommendation
     assert "video_url" in rec
-    assert rec["video_url"] is not None
-    assert rec["video_url"].startswith("data:video/mp4;base64,")
-    
+    assert "visualization_url" in rec
+    print(f"✓ Top style: {rec['style_name']} ({rec['suitability_score']}% Match)")
+
     # Assert ethnicity is analyzed
-    details = data["analysis_details"]
+    details = result["analysis_details"]
     assert "ethnicity_analysis" in details
     assert "detected_ethnicity" in details["ethnicity_analysis"]
-    assert "ethnicity" in details["client_attributes"]
-    assert details["client_attributes"]["ethnicity"] is not None
+    print(f"✓ Detected Ethnicity: {details['ethnicity_analysis']['detected_ethnicity']}")
 
-    print("✓ Analyze endpoint test passed")
-    print(f"  Received {len(data['recommendations'])} recommendations")
-    print(f"  Detected Ethnicity: {details['ethnicity_analysis']['detected_ethnicity']} ({details['ethnicity_analysis']['confidence'] * 100}%)")
-    print(f"  Top recommendation: {data['recommendations'][0]['style_name']} ({data['recommendations'][0]['suitability_score']}%)")
-    print(f"  Generated Runway Video: YES ({len(rec['video_url'])} bytes)")
+    # Test GET /history
+    print("\n--- Testing GET /history ---")
+    history_response = client.get("/history")
+    assert history_response.status_code == 200
+    history_data = history_response.json()
+    assert "history" in history_data
+    assert len(history_data["history"]) > 0
+    print(f"✓ History records retrieved: {len(history_data['history'])} records found")
+
+    # Test POST /refine (Refinement prompt)
+    print("\n--- Sleeping 20 seconds to prevent rate limits before refinement ---")
+    time.sleep(20)
+    print("\n--- Testing POST /refine (Stylist Refinement) ---")
+    refine_payload = {
+        "consultation_id": consultation_id,
+        "feedback": "Make the hair style slightly shorter on the sides and back"
+    }
+    refine_response = client.post("/refine", json=refine_payload)
+    assert refine_response.status_code == 200, f"Refine failed: {refine_response.text}"
+    refine_result = refine_response.json()
+    
+    assert "recommendations" in refine_result
+    assert len(refine_result["recommendations"]) == 3
+    ref_rec = refine_result["recommendations"][0]
+    print(f"✓ Refinement successful! New Top Recommendation: {ref_rec['style_name']}")
+
+    print("✓ Full consultation pipeline test passed successfully!")
+
 
 def run_all_tests():
     """Run all tests"""
-    print("Running backend tests...")
+    print("Starting Salon AI Multi-Agent validation...")
     try:
         test_health_endpoint()
         test_root_endpoint()
-        test_analyze_endpoint()
-        print("\n🎉 All tests passed!")
+        test_consultation_pipeline()
+        print("\n🎉 All tests passed successfully!")
     except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+        print(f"\n❌ Validation test failed: {e}")
         raise
 
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-.env
 __pycache__/
 **/__pycache__/
 venv/
@@ -6,3 +5,8 @@ venv/
 ~/.claude/
 .gemini/
 backend/*key.json
+backend/.env
+salon_management.db
+backend/data/
+.DS_Store
+backend/server.log
