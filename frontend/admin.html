@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon AI Master Stylist - Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* Default Theme: Midnight Gold */
+            --bg-primary: #07090e;
+            --bg-secondary: #0e121b;
+            --accent-primary: #deb876;
+            --accent-secondary: #f2dec2;
+            --text-main: #abb2bf;
+            --text-bright: #ffffff;
+            --glass-bg: rgba(14, 18, 27, 0.65);
+            --glass-border: rgba(222, 184, 118, 0.15);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+            --transition-speed: 0.3s;
+        }
+
+        body, .sidebar, .workspace, .capture-panel, .recommendation-card, .analysis-card, .analysis-row, header, .slot-btn, .btn, input, select, textarea {
+            transition: background 0.5s ease, background-color 0.5s ease, border-color 0.5s ease, color 0.3s ease, box-shadow 0.5s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% -20%, rgba(222, 184, 118, 0.08), transparent 50%);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Luxury Physical Noise Texture Overlay */
+        .textured-element {
+            position: relative;
+        }
+        .textured-element::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            border-radius: inherit;
+        }
+
+        /* Layout wrapper */
+        .app-wrapper {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar for consultation history */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-bright);
+            letter-spacing: 0.5px;
+        }
+
+        /* Main panel workspace */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-bright);
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text-bright) 30%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-main);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* Workspace container */
+        .content-container {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            flex: 1;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            color: var(--text-bright);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Premium Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);
+            color: #07090e;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 15px rgba(222, 184, 118, 0.15);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(222, 184, 118, 0.3);
+            filter: brightness(1.05);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-bright);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(222, 184, 118, 0.08);
+            border-color: var(--accent-primary);
+        }
+
+        /* Check-in Landing Page Overlay */
+        .checkin-overlay, .generic-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(25px);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            opacity: 0;
+            transition: display 0.4s, opacity 0.4s ease-out;
+            transition-behavior: allow-discrete;
+        }
+
+        .checkin-overlay.show, .generic-modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .checkin-card, .generic-modal-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 95%;
+            max-width: 480px;
+            box-shadow: var(--glass-shadow);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .checkin-overlay.show .checkin-card, .generic-modal-overlay.show .generic-modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        @starting-style {
+            .checkin-overlay.show, .generic-modal-overlay.show {
+                opacity: 0;
+            }
+            .checkin-overlay.show .checkin-card, .generic-modal-overlay.show .generic-modal-card {
+                transform: translateY(30px) scale(0.95);
+            }
+        }
+
+        /* Gravity-Defying Orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.12;
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+
+        .orb-cyan {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-primary);
+            animation: floatCyan 25s ease-in-out infinite alternate;
+        }
+
+        .orb-purple {
+            width: 450px;
+            height: 450px;
+            background: #9b5de5;
+            animation: floatPurple 30s ease-in-out infinite alternate;
+        }
+
+        .orb-pink {
+            width: 350px;
+            height: 350px;
+            background: #f15bb5;
+            animation: floatPink 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatCyan {
+            0% { transform: translate(-100px, -80px) scale(1); }
+            100% { transform: translate(150px, 180px) scale(1.2); }
+        }
+
+        @keyframes floatPurple {
+            0% { transform: translate(150px, 100px) scale(1.1); }
+            100% { transform: translate(-120px, -180px) scale(0.9); }
+        }
+
+        @keyframes floatPink {
+            0% { transform: translate(-180px, 180px) scale(0.9); }
+            100% { transform: translate(180px, -100px) scale(1.15); }
+        }
+
+        /* CRM and Inventory Custom Styles */
+        .crm-panel-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+            height: calc(100vh - 140px);
+        }
+        
+        .crm-list-sidebar {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .crm-list-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            color: var(--text-bright);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-cards-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 2px;
+        }
+
+        .client-list-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .client-list-card:hover {
+            border-color: var(--accent-primary);
+            background: rgba(222, 184, 118, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .client-list-card.active {
+            border-color: var(--accent-primary);
+            background: rgba(222, 184, 118, 0.08);
+            box-shadow: 0 0 15px rgba(222, 184, 118, 0.15);
+        }
+
+        @starting-style {
+            .client-list-card {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+        }
+
+        .crm-detail-main {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: 100%;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .crm-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 20px;
+        }
+
+        .crm-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .crm-meta-box {
+            background: rgba(7, 9, 14, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 0.85rem;
+        }
+
+        .crm-meta-box label {
+            font-size: 0.7rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .crm-meta-box span {
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        .allergy-badge-alert {
+            background: rgba(255, 74, 74, 0.06);
+            border: 1px solid rgba(255, 74, 74, 0.25);
+            color: #ff9999;
+            border-radius: 14px;
+            padding: 16px 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 600;
+        }
+
+        /* Loyalty Badge Metallic */
+        .loyalty-badge {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: #07090e;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(222, 184, 118, 0.1);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .loyalty-badge::after {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.25) 50%, transparent 55%);
+            transform: rotate(45deg);
+            animation: sheen 6s infinite ease-in-out;
+        }
+
+        @keyframes sheen {
+            0% { transform: translate(-100%, -100%) rotate(45deg); }
+            100% { transform: translate(100%, 100%) rotate(45deg); }
+        }
+
+        /* Inventory style items */
+        .inv-layout-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            height: calc(100vh - 140px);
+        }
+
+        .inv-filter-sidebar {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .inv-main-workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            height: 100%;
+            padding-right: 2px;
+        }
+
+        .inv-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .inv-stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .inv-stat-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-bright);
+            font-family: 'Outfit', sans-serif;
+            margin-top: 4px;
+        }
+
+        .inv-badge-stock {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .inv-badge-stock.instock {
+            background: rgba(86, 219, 149, 0.1);
+            color: #56db95;
+            border: 1px solid rgba(86, 219, 149, 0.2);
+        }
+
+        .inv-badge-stock.critical {
+            background: rgba(255, 74, 74, 0.1);
+            color: #ff8080;
+            border: 1px solid rgba(255, 74, 74, 0.25);
+        }
+
+        .inv-alert-card {
+            background: rgba(255, 74, 74, 0.02);
+            border: 1px solid rgba(255, 74, 74, 0.15);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .inv-alert-card.warning-glow {
+            border-color: rgba(255, 74, 74, 0.3);
+            box-shadow: 0 0 15px rgba(255, 74, 74, 0.05);
+            animation: warningPulse 3s infinite alternate;
+        }
+
+        @keyframes warningPulse {
+            0% { border-color: rgba(255, 74, 74, 0.2); box-shadow: 0 0 8px rgba(255, 74, 74, 0.05); }
+            100% { border-color: rgba(255, 74, 74, 0.45); box-shadow: 0 0 20px rgba(255, 74, 74, 0.15); }
+        }
+
+        @starting-style {
+            .inv-alert-card {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+        }
+
+        .horizontal-scroller-formulas {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+        }
+
+        .formula-timeline-card {
+            flex: 0 0 260px;
+            background: rgba(7, 9, 14, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 0.8rem;
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        @starting-style {
+            .formula-timeline-card {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+        }
+
+        /* View transitions reduces user motion support */
+        @media (prefers-reduced-motion: reduce) {
+            ::view-transition-group(*),
+            ::view-transition-old(*),
+            ::view-transition-new(*) {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="textured-element">
+
+    <!-- Client Check-in Landing Page Overlay -->
+    <div class="checkin-overlay" id="checkInOverlay">
+        <div class="orb orb-cyan"></div>
+        <div class="orb orb-purple"></div>
+        <div class="orb orb-pink"></div>
+        
+        <div class="checkin-card textured-element">
+            <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--text-bright); background: linear-gradient(45deg, var(--text-bright) 30%, var(--accent-primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; text-align: center;">
+                Master Stylist AI
+            </h1>
+            <p style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 10px; text-align: center;">
+                Enter client details to retrieve styling preference records.
+            </p>
+            
+            <div style="text-align: left; display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label for="checkin_firstName">First Name</label>
+                    <input type="text" id="checkin_firstName" placeholder="e.g. Rahul" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkin_lastName">Last Name</label>
+                    <input type="text" id="checkin_lastName" placeholder="e.g. Kumar" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkin_phone">Phone / Mobile Number</label>
+                    <input type="tel" id="checkin_phone" placeholder="e.g. 9999999999" required>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-secondary" onclick="closeCheckInOverlay()" style="flex: 1; border-radius: 12px; height: 50px;">Cancel</button>
+                <button class="btn" onclick="submitCheckIn()" style="flex: 2; border-radius: 12px; height: 50px; font-size: 1rem;">Start Session</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-wrapper">
+
+        <!-- Main Workspace -->
+        <div class="workspace">
+            <header>
+                <div>
+                    <h1>Salon AI Administrative Portal</h1>
+                    <p id="headerSubtitle" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="headerClientLabel" style="color: var(--accent-primary); font-weight: 600;">System Console</span>
+                        <span style="color: var(--glass-border);">|</span>
+                        <span>Stylist CRM & Warehouse Inventory Control Console</span>
+                    </p>
+                </div>
+                <!-- Navigation Tabs -->
+                <div style="display: flex; background: rgba(7, 9, 14, 0.6); padding: 4px; border-radius: 14px; border: 1px solid var(--glass-border); gap: 4px;">
+                    <button class="btn" id="tabBtn_crm" onclick="switchTab('crm')" style="padding: 8px 16px; font-size: 0.8rem; background: var(--accent-primary); color: #07090e; box-shadow: none; border-radius: 10px;">
+                        <i class="fa-solid fa-users" style="font-size: 0.85rem;"></i> Clients CRM
+                    </button>
+                    <button class="btn btn-secondary" id="tabBtn_inventory" onclick="switchTab('inventory')" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 10px; border: none; background: transparent; position: relative;">
+                        <i class="fa-solid fa-boxes-stacked" style="font-size: 0.85rem;"></i> Inventory Control
+                        <span id="headerAlertBadge" style="display: none; position: absolute; top: -5px; right: -5px; background: #ff4a4a; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 10px; line-height: 1;">0</span>
+                    </button>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <!-- Theme Selector Dropdown -->
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label for="themeSelect" style="font-size: 0.8rem; color: var(--text-main); font-weight: 500;">Theme:</label>
+                        <select id="themeSelect" onchange="applyTheme(this.value)" style="background: rgba(7, 9, 14, 0.6); border: 1px solid var(--glass-border); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; color: var(--text-bright); outline: none; cursor: pointer;">
+                            <option value="midnight">Midnight Noir</option>
+                            <option value="rose">Sunset Rose</option>
+                            <option value="amber">Cozy Amber</option>
+                            <option value="jade">Forest Jade</option>
+                        </select>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-container">
+
+                <!-- CRM Panel -->
+                <div class="crm-panel-grid" id="crmPanel" style="display: none;">
+                    <!-- Sidebar list -->
+                    <div class="crm-list-sidebar textured-element">
+                        <div class="crm-list-title">
+                            <span>Client Directory</span>
+                            <button class="btn" onclick="openCrmCheckIn()" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 8px; box-shadow: none;">
+                                <i class="fa-solid fa-plus"></i> Add
+                            </button>
+                        </div>
+                        <div class="search-input-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="crmSearchInput" placeholder="Search name or phone..." oninput="filterCrmClients()">
+                        </div>
+                        <div class="client-cards-container" id="crmClientsList">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                    
+                    <!-- Main details -->
+                    <div class="crm-detail-main textured-element" id="crmDetailMain">
+                        <!-- Empty state by default -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-main); text-align: center; gap: 16px;">
+                            <i class="fa-solid fa-id-card" style="font-size: 3.5rem; color: var(--glass-border);"></i>
+                            <h3 style="color: var(--text-bright); font-family: 'Outfit'; font-weight: 700; font-size: 1.25rem;">No Client Selected</h3>
+                            <p style="font-size: 0.85rem; max-width: 320px; line-height: 1.5;">Select a client from the directory sidebar to manage styling preferences, chemical history, color formula logs, and loyalty points.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Panel -->
+                <div class="inv-layout-grid" id="inventoryPanel" style="display: none;">
+                    <!-- Sidebar controls -->
+                    <div class="inv-filter-sidebar textured-element">
+                        <div>
+                            <h3 style="font-family: 'Outfit'; font-weight: 700; color: var(--text-bright); margin-bottom: 4px; font-size: 1.1rem;">Warehouse Filters</h3>
+                            <p style="font-size: 0.75rem; color: var(--text-main);">Segment stock products & raw materials.</p>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-main);">Search Inventory</label>
+                            <div class="search-input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="invSearchInput" placeholder="SKU, Brand, Name..." oninput="filterInventoryItems()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-main);">Salon Category</label>
+                            <select id="invCategorySelect" onchange="filterInventoryItems()">
+                                <option value="all">All Category Items</option>
+                                <option value="hair_care">Hair Care Products</option>
+                                <option value="styling">Stylist Products</option>
+                                <option value="color">Color Retouch Dyes</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                            <input type="checkbox" id="invLowStockCheckbox" onchange="filterInventoryItems()" style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent-primary);">
+                            <label for="invLowStockCheckbox" style="font-size: 0.8rem; color: var(--text-main); font-weight: 500; cursor: pointer;">Show Low Stock Only</label>
+                        </div>
+                        <button class="btn" onclick="openStockTxModal()" style="margin-top: 10px; width: 100%; border-radius: 12px; box-shadow: none;">
+                            <i class="fa-solid fa-right-left"></i> Record Stock Movement
+                        </button>
+                    </div>
+
+                    <!-- Main inventory workspace -->
+                    <div class="inv-main-workspace">
+                        <!-- Stats Row -->
+                        <div class="inv-stats-row">
+                            <div class="inv-stat-card textured-element">
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-main); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Stock Items</span>
+                                    <div class="inv-stat-val" id="invStat_totalItems">0</div>
+                                </div>
+                                <i class="fa-solid fa-tags" style="font-size: 1.5rem; color: var(--accent-primary); opacity: 0.7;"></i>
+                            </div>
+                            <div class="inv-stat-card textured-element">
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-main); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Low Stock Alerts</span>
+                                    <div class="inv-stat-val" id="invStat_lowStock" style="color: #ff8080;">0</div>
+                                </div>
+                                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem; color: #ff8080; opacity: 0.7;"></i>
+                            </div>
+                            <div class="inv-stat-card textured-element">
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--text-main); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Supplier Partners</span>
+                                    <div class="inv-stat-val" id="invStat_suppliers" style="color: var(--accent-primary);">0</div>
+                                </div>
+                                <i class="fa-solid fa-truck" style="font-size: 1.5rem; color: var(--accent-primary); opacity: 0.7;"></i>
+                            </div>
+                        </div>
+
+                        <!-- Grids & alerts -->
+                        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 30px; flex: 1;">
+                            <!-- Table card -->
+                            <div class="inv-table-card textured-element" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                                <div style="overflow-y: auto; max-height: 520px;">
+                                    <table class="inv-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                                        <thead>
+                                            <tr>
+                                                <th>Item Name</th>
+                                                <th>SKU / Brand</th>
+                                                <th>Stock</th>
+                                                <th>Safety</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="inventoryTableBody">
+                                            <!-- Dynamically populated -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Reorder alerts panel -->
+                            <div class="inv-table-card textured-element" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto;">
+                                <h3 style="font-family: 'Outfit'; font-weight: 700; color: var(--text-bright); border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; font-size: 1rem;">
+                                    <i class="fa-solid fa-bell" style="color: var(--accent-primary); font-size: 0.9rem;"></i> Restock Alerts & POs
+                                </h3>
+                                <div id="invAlertsContainer" style="flex: 1; display: flex; flex-direction: column;">
+                                    <!-- Low Stock Alert Cards + Draft POs Grouped -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Edit Client Profile Modal -->
+    <div class="generic-modal-overlay" id="editProfileModal">
+        <div class="generic-modal-card textured-element" style="max-width: 550px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 8px;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-bright); margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-user-pen" style="color: var(--accent-primary);"></i> Edit Client Profile Attributes
+                </h3>
+                <button onclick="closeEditProfileModal()" style="background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; outline: none; line-height: 1;">&times;</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-height: 400px; overflow-y: auto; padding-right: 4px;">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Email Address</label>
+                    <input type="email" id="edit_email" placeholder="e.g. client@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="edit_phone" placeholder="e.g. 9999999999">
+                </div>
+                <div class="form-group">
+                    <label>Natural Color</label>
+                    <input type="text" id="edit_naturalColor" placeholder="e.g. Dark Brown">
+                </div>
+                <div class="form-group">
+                    <label>Hair Density</label>
+                    <select id="edit_hairDensity">
+                        <option value="thin">Thin</option>
+                        <option value="medium">Medium</option>
+                        <option value="thick">Thick</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hair Porosity</label>
+                    <select id="edit_hairPorosity">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hair Elasticity</label>
+                    <select id="edit_hairElasticity">
+                        <option value="poor">Poor</option>
+                        <option value="normal">Normal</option>
+                        <option value="good">Good</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Scalp Type</label>
+                    <select id="edit_scalpType">
+                        <option value="normal">Normal</option>
+                        <option value="dry">Dry</option>
+                        <option value="oily">Oily</option>
+                        <option value="sensitive">Sensitive</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Typical Maintenance Level</label>
+                    <select id="edit_typicalMaintenance">
+                        <option value="low">Low</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Chemical & Product Allergies</label>
+                    <input type="text" id="edit_allergies" placeholder="e.g. Ammonia, Fragrances">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Chemical Treatment History Notes</label>
+                    <textarea id="edit_chemicalTreatmentHistory" rows="3" style="width: 100%; background: rgba(7, 9, 14, 0.6); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-bright); padding: 12px 16px; outline: none; font-size: 0.9rem; resize: vertical;" placeholder="e.g. Perm straightener in Oct 2025, bleaching in March 2026..."></textarea>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--glass-border); padding-top: 16px; margin-top: 4px;">
+                <button class="btn btn-secondary" onclick="closeEditProfileModal()" style="border-radius: 12px; padding: 10px 20px;">Cancel</button>
+                <button class="btn" onclick="saveCrmProfile()" style="border-radius: 12px; padding: 10px 20px;">Save Updates</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Stock Movement Modal -->
+    <div class="generic-modal-overlay" id="stockTxModal">
+        <div class="generic-modal-card textured-element" style="max-width: 450px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 8px;">
+                <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-bright); margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-right-left" style="color: var(--accent-primary);"></i> Record Stock Movement
+                </h3>
+                <button onclick="closeStockTxModal()" style="background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; outline: none; line-height: 1;">&times;</button>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label>Select Inventory Item</label>
+                    <select id="txItemSelect" style="width: 100%;">
+                        <option value="">-- Choose Product/Material --</option>
+                    </select>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Movement Type</label>
+                        <select id="txTypeSelect" style="width: 100%;">
+                            <option value="receive">Receive Stock (+)</option>
+                            <option value="sale">Client Sale (-)</option>
+                            <option value="usage">Stylist Usage (-)</option>
+                            <option value="adjustment">Manual Adjustment</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity Delta</label>
+                        <input type="number" id="txQuantity" placeholder="e.g. 5 or -2" step="any" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Performed By</label>
+                    <input type="text" id="txPerformedBy" placeholder="e.g. Stylist Priya" required>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--glass-border); padding-top: 16px; margin-top: 4px;">
+                <button class="btn btn-secondary" onclick="closeStockTxModal()" style="border-radius: 12px; padding: 10px 20px;">Cancel</button>
+                <button class="btn" onclick="recordStockTransaction()" style="border-radius: 12px; padding: 10px 20px;">Execute</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global State
+        let activeClientId = null;
+        let clientName = "";
+        let clientPhone = "";
+
+        // CRM & Inventory active lists
+        let currentTab = 'crm';
+        let currentCrmClients = [];
+        let selectedCrmClientData = null;
+        let currentInventory = [];
+        let activeAlerts = [];
+        let suppliersList = [];
+
+        // Theme Configurations
+        const themes = {
+            midnight: {
+                '--bg-primary': '#07090e',
+                '--bg-secondary': '#0e121b',
+                '--accent-primary': '#deb876',
+                '--accent-secondary': '#f2dec2',
+                '--text-main': '#abb2bf',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(14, 18, 27, 0.65)',
+                '--glass-border': 'rgba(222, 184, 118, 0.15)'
+            },
+            rose: {
+                '--bg-primary': '#0c060b',
+                '--bg-secondary': '#1c0f1b',
+                '--accent-primary': '#f090b0',
+                '--accent-secondary': '#f8c4d4',
+                '--text-main': '#cbb9c6',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(28, 15, 27, 0.65)',
+                '--glass-border': 'rgba(240, 144, 176, 0.15)'
+            },
+            amber: {
+                '--bg-primary': '#0b0806',
+                '--bg-secondary': '#1b120e',
+                '--accent-primary': '#e5a04c',
+                '--accent-secondary': '#f0c995',
+                '--text-main': '#cbbbb2',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(27, 18, 14, 0.65)',
+                '--glass-border': 'rgba(229, 160, 76, 0.15)'
+            },
+            jade: {
+                '--bg-primary': '#050a07',
+                '--bg-secondary': '#0f1c14',
+                '--accent-primary': '#5cd699',
+                '--accent-secondary': '#99ebc2',
+                '--text-main': '#abc2b5',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(15, 28, 20, 0.65)',
+                '--glass-border': 'rgba(92, 214, 153, 0.15)'
+            }
+        };
+
+        function applyTheme(themeKey) {
+            const theme = themes[themeKey];
+            if (!theme) return;
+            for (const [prop, val] of Object.entries(theme)) {
+                document.documentElement.style.setProperty(prop, val);
+            }
+        }
+        
+        // On load
+        window.addEventListener('load', async () => {
+            // Switch to CRM tab on launch
+            switchTab('crm');
+
+            // Pre-fetch inventory alerts to show badging in tab
+            try {
+                const alertsRes = await fetch('http://localhost:8000/api/inventory/alerts');
+                const alertsData = await alertsRes.json();
+                const tabAlertBadge = document.getElementById('headerAlertBadge');
+                if (alertsData.alerts.length > 0) {
+                    tabAlertBadge.textContent = alertsData.alerts.length;
+                    tabAlertBadge.style.display = 'inline-block';
+                }
+            } catch (e) {
+                console.log("Pre-fetch alerts warning: ", e);
+            }
+        });
+
+        function openCrmCheckIn() {
+            document.getElementById('checkInOverlay').classList.add('show');
+        }
+
+        function closeCheckInOverlay() {
+            document.getElementById('checkInOverlay').classList.remove('show');
+        }
+
+        // Client Check-In/Registration handler for admin CRM list
+        async function submitCheckIn() {
+            const first = document.getElementById('checkin_firstName').value.trim();
+            const last = document.getElementById('checkin_lastName').value.trim();
+            const phone = document.getElementById('checkin_phone').value.trim();
+            
+            if (!first || !last || !phone) {
+                alert('Please fill in First Name, Last Name, and Phone number.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/check-in', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        first_name: first,
+                        last_name: last,
+                        phone: phone
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned status ${response.status}`);
+                }
+                
+                const data = await response.json();
+                activeClientId = data.client_id;
+                clientName = `${data.first_name} ${data.last_name}`;
+                clientPhone = data.phone;
+                
+                // Hide check-in landing screen
+                closeCheckInOverlay();
+                
+                // Refresh client directory
+                await loadCrmTab();
+                
+                // Auto-select the newly checked-in/registered client
+                await selectCrmClient(activeClientId, null);
+                
+                showToastNotification(`Successfully checked in / added client: ${clientName}`);
+                
+            } catch (err) {
+                console.error('Check-in/Add client request failed', err);
+                alert('Operation failed: ' + err.message);
+            }
+        }
+
+        // ============================================================================
+        // CLIENT RELATIONSHIP MANAGEMENT (CRM) LOGIC
+        // ============================================================================
+        
+        async function loadCrmTab() {
+            try {
+                const response = await fetch('http://localhost:8000/api/crm/clients');
+                const data = await response.json();
+                currentCrmClients = data.clients;
+                renderCrmClients(currentCrmClients);
+            } catch (err) {
+                console.error("Failed to load CRM clients list", err);
+            }
+        }
+
+        function renderCrmClients(clientsList) {
+            const container = document.getElementById('crmClientsList');
+            container.innerHTML = '';
+            
+            if (clientsList.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-main); text-align: center; font-size: 0.8rem; padding: 20px;">No clients found</div>';
+                return;
+            }
+            
+            clientsList.forEach(c => {
+                const div = document.createElement('div');
+                div.className = `client-list-card ${selectedCrmClientData && selectedCrmClientData.client_id === c.id ? 'active' : ''}`;
+                div.onclick = () => selectCrmClient(c.id, div);
+                
+                const lastVisitStr = c.last_visit_date ? new Date(c.last_visit_date).toLocaleDateString() : 'Never';
+                
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-weight: 700; color: var(--text-bright); font-size: 0.9rem;">${c.first_name} ${c.last_name}</span>
+                        <span style="font-size: 0.7rem; color: var(--accent-primary); font-weight: 700; background: rgba(222, 184, 118, 0.1); padding: 2px 6px; border-radius: 4px;">ID: ${c.id}</span>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-main); display: flex; flex-direction: column; gap: 2px;">
+                        <span>📞 ${c.phone}</span>
+                        <span>📅 Last Visit: ${lastVisitStr}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function filterCrmClients() {
+            const query = document.getElementById('crmSearchInput').value.toLowerCase().trim();
+            if (!query) {
+                renderCrmClients(currentCrmClients);
+                return;
+            }
+            const filtered = currentCrmClients.filter(c => {
+                const fullname = `${c.first_name} ${c.last_name}`.toLowerCase();
+                return fullname.includes(query) || c.phone.includes(query) || (c.email && c.email.toLowerCase().includes(query));
+            });
+            renderCrmClients(filtered);
+        }
+
+        async function selectCrmClient(clientId, cardElement) {
+            document.querySelectorAll('.client-list-card').forEach(el => el.classList.remove('active'));
+            if (cardElement) {
+                cardElement.classList.add('active');
+            }
+            
+            try {
+                const response = await fetch(`http://localhost:8000/api/crm/clients/${clientId}/profile`);
+                if (!response.ok) throw new Error("Profile not found");
+                selectedCrmClientData = await response.json();
+                
+                const basicInfo = currentCrmClients.find(c => c.id === clientId) || { total_visits: 0, total_spent: 0 };
+                selectedCrmClientData.total_visits = basicInfo.total_visits;
+                selectedCrmClientData.total_spent = basicInfo.total_spent;
+                
+                renderCrmDetail(selectedCrmClientData);
+            } catch (err) {
+                console.error("Failed to load client profile", err);
+                alert("Failed to load client profile: " + err.message);
+            }
+        }
+
+        function renderCrmDetail(profile) {
+            const main = document.getElementById('crmDetailMain');
+            
+            let allergyHTML = '';
+            if (profile.allergies && profile.allergies.trim()) {
+                allergyHTML = `
+                    <div class="allergy-badge-alert" style="margin-bottom: 20px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.25rem;"></i>
+                        <div>
+                            <span style="display:block; font-size: 0.75rem; text-transform: uppercase; color: #ff8080; font-weight: 700;">Warning: Allergies Detected</span>
+                            <span style="font-size: 0.85rem; color: var(--text-bright);">${profile.allergies}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                allergyHTML = `
+                    <div style="background: rgba(86, 219, 149, 0.05); border: 1px solid rgba(86, 219, 149, 0.2); color: #56db95; border-radius: 10px; padding: 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; font-weight: 600;">
+                        <i class="fa-solid fa-circle-check" style="font-size: 1.25rem;"></i>
+                        <span>No product or chemical allergies registered.</span>
+                    </div>
+                `;
+            }
+
+            let formulasHTML = '';
+            if (profile.color_formulas && profile.color_formulas.length > 0) {
+                formulasHTML = profile.color_formulas.map(f => {
+                    const dateStr = new Date(f.date).toLocaleDateString();
+                    return `
+                        <div class="formula-timeline-card">
+                            <div style="display:flex; justify-content:space-between; font-size: 0.7rem; color: var(--text-main); margin-bottom: 8px;">
+                                <span>📅 ${dateStr}</span>
+                                <span>Stylist: ${f.stylist_name}</span>
+                            </div>
+                            <div style="background: rgba(7, 9, 14, 0.6); padding: 8px 12px; border-radius: 8px; font-family: monospace; color: var(--accent-primary); font-size: 0.75rem; border: 1px solid var(--glass-border); line-height: 1.4;">
+                                ${f.formula}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                formulasHTML = `<div style="color: var(--text-main); font-size: 0.8rem; font-style: italic; padding: 10px 0;">No past color formulas recorded.</div>`;
+            }
+
+            let styleHistoryHTML = '';
+            if (profile.style_history && profile.style_history.length > 0) {
+                styleHistoryHTML = profile.style_history.map(h => {
+                    const dateStr = new Date(h.date).toLocaleDateString();
+                    const ratingStars = '★'.repeat(h.satisfaction_score || 5) + '☆'.repeat(5 - (h.satisfaction_score || 5));
+                    return `
+                        <div class="formula-timeline-card" style="flex: 0 0 280px;">
+                            <div style="display:flex; justify-content:space-between; font-size: 0.7rem; color: var(--text-main); margin-bottom: 6px;">
+                                <span>📅 ${dateStr}</span>
+                                <span style="color: var(--accent-primary); font-weight: 700;">${ratingStars}</span>
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-bright); font-size: 0.85rem; margin-bottom: 2px;">${h.recommended_style}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-main);">Service: ${h.actual_service || 'N/A'}</div>
+                            </div>
+                            <p style="margin: 6px 0 0 0; color: var(--text-main); font-size: 0.75rem; line-height: 1.4; border-top: 1px dotted var(--glass-border); padding-top: 6px;">${h.notes || 'No notes.'}</p>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                styleHistoryHTML = `<div style="color: var(--text-main); font-size: 0.8rem; font-style: italic; padding: 10px 0;">No styling history recorded.</div>`;
+            }
+
+            const loyaltyPoints = Math.round(profile.total_spent || 0);
+
+            main.innerHTML = `
+                <div class="crm-detail-header">
+                    <div>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-weight: 800; color: var(--text-bright); font-size: 1.6rem; margin: 0 0 6px 0;">
+                            ${profile.first_name} ${profile.last_name}
+                        </h2>
+                        <div style="display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-main);">
+                            <span><i class="fa-solid fa-phone" style="color: var(--accent-primary); font-size: 0.75rem; margin-right: 4px;"></i> ${profile.phone}</span>
+                            <span><i class="fa-solid fa-envelope" style="color: var(--accent-primary); font-size: 0.75rem; margin-right: 4px;"></i> ${profile.email || 'No email registered'}</span>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="openEditProfileModal()" style="border-radius: 12px; font-size: 0.8rem; padding: 8px 16px; box-shadow: none;">
+                        <i class="fa-solid fa-user-gear"></i> Edit Profile
+                    </button>
+                </div>
+
+                ${allergyHTML}
+
+                <!-- Key Metrics & Loyalty Grid -->
+                <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 24px;">
+                    <!-- Hair Metrics -->
+                    <div style="background: rgba(255, 255, 255, 0.01); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px;">
+                        <h3 style="font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text-bright); margin: 0 0 16px 0; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-circle-info" style="color: var(--accent-primary); font-size: 0.95rem;"></i> Characteristics & Diagnostics
+                        </h3>
+                        <div class="crm-meta-grid">
+                            <div class="crm-meta-box">
+                                <label>Natural Color</label>
+                                <span>${profile.natural_color || 'Unrecorded'}</span>
+                            </div>
+                            <div class="crm-meta-box">
+                                <label>Density</label>
+                                <span style="text-transform: capitalize;">${profile.hair_density || 'Unrecorded'}</span>
+                            </div>
+                            <div class="crm-meta-box">
+                                <label>Porosity</label>
+                                <span style="text-transform: capitalize;">${profile.hair_porosity || 'Unrecorded'}</span>
+                            </div>
+                            <div class="crm-meta-box">
+                                <label>Elasticity</label>
+                                <span style="text-transform: capitalize;">${profile.hair_elasticity || 'Unrecorded'}</span>
+                            </div>
+                            <div class="crm-meta-box">
+                                <label>Scalp Type</label>
+                                <span style="text-transform: capitalize;">${profile.scalp_type || 'Unrecorded'}</span>
+                            </div>
+                            <div class="crm-meta-box">
+                                <label>Maintenance</label>
+                                <span style="text-transform: capitalize;">${profile.typical_maintenance || 'Unrecorded'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loyalty Status -->
+                    <div class="loyalty-badge">
+                        <div style="z-index: 2;">
+                            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 800; color: #07090e; margin: 0 0 6px 0; display:flex; align-items:center; gap:8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fa-solid fa-crown" style="font-size: 1rem;"></i> VIP Loyalty Club
+                            </h3>
+                            <p style="font-size: 0.75rem; color: rgba(7, 9, 14, 0.75); margin: 0; font-weight: 500; line-height: 1.3;">Earn 1 point per INR 1 spent on salon styling treatments.</p>
+                        </div>
+                        <div style="text-align: right; z-index: 2; padding-top: 16px;">
+                            <div style="font-size: 2.6rem; font-weight: 900; color: #07090e; line-height: 1; font-family: 'Outfit';">${loyaltyPoints}</div>
+                            <span style="font-size: 0.7rem; color: rgba(7, 9, 14, 0.75); font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;">Points Available</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chemical treatment notes -->
+                <div style="background: rgba(255, 255, 255, 0.01); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px;">
+                    <h4 style="margin: 0 0 10px 0; font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: var(--text-bright); font-weight: 700; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-flask" style="color: var(--accent-primary); font-size: 0.9rem;"></i> Chemical Treatment History Notes
+                    </h4>
+                    <p style="margin: 0; color: var(--text-main); font-size: 0.85rem; line-height: 1.5;">
+                        ${profile.chemical_treatment_history || 'No chemical treatment notes registered for this client.'}
+                    </p>
+                </div>
+
+                <!-- Color Formula Timeline -->
+                <div>
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text-bright); margin: 0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-palette" style="color: var(--accent-primary); font-size: 0.9rem;"></i> Color Formulas Timeline
+                    </h3>
+                    <div class="horizontal-scroller-formulas">
+                        ${formulasHTML}
+                    </div>
+                </div>
+
+                <!-- Style History -->
+                <div>
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text-bright); margin: 0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-primary); font-size: 0.9rem;"></i> Style History & Feedback
+                    </h3>
+                    <div class="horizontal-scroller-formulas">
+                        ${styleHistoryHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openEditProfileModal() {
+            if (!selectedCrmClientData) return;
+            
+            document.getElementById('edit_email').value = selectedCrmClientData.email || '';
+            document.getElementById('edit_phone').value = selectedCrmClientData.phone || '';
+            document.getElementById('edit_naturalColor').value = selectedCrmClientData.natural_color || '';
+            document.getElementById('edit_hairDensity').value = selectedCrmClientData.hair_density || 'medium';
+            document.getElementById('edit_hairPorosity').value = selectedCrmClientData.hair_porosity || 'medium';
+            document.getElementById('edit_hairElasticity').value = selectedCrmClientData.hair_elasticity || 'normal';
+            document.getElementById('edit_scalpType').value = selectedCrmClientData.scalp_type || 'normal';
+            document.getElementById('edit_typicalMaintenance').value = selectedCrmClientData.typical_maintenance || 'low';
+            document.getElementById('edit_allergies').value = selectedCrmClientData.allergies || '';
+            document.getElementById('edit_chemicalTreatmentHistory').value = selectedCrmClientData.chemical_treatment_history || '';
+            
+            document.getElementById('editProfileModal').classList.add('show');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').classList.remove('show');
+        }
+
+        async function saveCrmProfile() {
+            if (!selectedCrmClientData) return;
+            
+            const email = document.getElementById('edit_email').value.trim();
+            const phone = document.getElementById('edit_phone').value.trim();
+            const natural_color = document.getElementById('edit_naturalColor').value.trim();
+            const hair_density = document.getElementById('edit_hairDensity').value;
+            const hair_porosity = document.getElementById('edit_hairPorosity').value;
+            const hair_elasticity = document.getElementById('edit_hairElasticity').value;
+            const scalp_type = document.getElementById('edit_scalpType').value;
+            const typical_maintenance = document.getElementById('edit_typicalMaintenance').value;
+            const allergies = document.getElementById('edit_allergies').value.trim();
+            const chemical_treatment_history = document.getElementById('edit_chemicalTreatmentHistory').value.trim();
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/crm/clients/${selectedCrmClientData.client_id}/profile`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email, phone, natural_color, hair_density, hair_porosity, hair_elasticity, scalp_type, typical_maintenance, allergies, chemical_treatment_history
+                    })
+                });
+                
+                if (!response.ok) throw new Error("Failed to save profile changes");
+                
+                await loadCrmTab(); 
+                await selectCrmClient(selectedCrmClientData.client_id, null);
+                
+                closeEditProfileModal();
+                showToastNotification("Client profile updated successfully!");
+            } catch (err) {
+                console.error("Save profile error", err);
+                alert("Failed to save profile changes: " + err.message);
+            }
+        }
+
+        // ============================================================================
+        // INVENTORY MANAGEMENT LOGIC
+        // ============================================================================
+
+        async function loadInventoryTab() {
+            try {
+                const invRes = await fetch('http://localhost:8000/api/inventory');
+                const invData = await invRes.json();
+                currentInventory = invData.products;
+                
+                const alertsRes = await fetch('http://localhost:8000/api/inventory/alerts');
+                const alertsData = await alertsRes.json();
+                activeAlerts = alertsData.alerts;
+                
+                const supRes = await fetch('http://localhost:8000/api/suppliers');
+                const supData = await supRes.json();
+                suppliersList = supData.suppliers;
+
+                document.getElementById('invStat_totalItems').textContent = currentInventory.length;
+                document.getElementById('invStat_lowStock').textContent = activeAlerts.length;
+                document.getElementById('invStat_suppliers').textContent = suppliersList.length;
+                
+                const tabAlertBadge = document.getElementById('headerAlertBadge');
+                if (activeAlerts.length > 0) {
+                    tabAlertBadge.textContent = activeAlerts.length;
+                    tabAlertBadge.style.display = 'inline-block';
+                } else {
+                    tabAlertBadge.style.display = 'none';
+                }
+
+                renderInventoryTable(currentInventory);
+                renderAlertsAndPurchaseOrders();
+                populateTxItemSelect();
+                
+            } catch (err) {
+                console.error("Failed to load inventory data", err);
+            }
+        }
+
+        function renderInventoryTable(items) {
+            const tbody = document.getElementById('inventoryTableBody');
+            tbody.innerHTML = '';
+            
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-main); padding: 24px;">No inventory items found</td></tr>';
+                return;
+            }
+            
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                const isLow = item.quantity_in_stock <= item.safety_stock_level;
+                const statusBadge = isLow 
+                    ? `<span class="inv-badge-stock critical">CRITICAL</span>` 
+                    : `<span class="inv-badge-stock instock">IN STOCK</span>`;
+                    
+                const unit = item.inventory_type === 'product' ? 'pcs' : (item.unit || 'g/ml');
+                const typeBadge = item.inventory_type === 'product' 
+                    ? `<span style="font-size:0.65rem; color:var(--accent-primary); border: 1px solid rgba(222, 184, 118, 0.2); background:rgba(222, 184, 118, 0.05); padding:2px 6px; border-radius:4px; font-weight:700;">RETAIL</span>` 
+                    : `<span style="font-size:0.65rem; color:#f090b0; border: 1px solid rgba(240, 144, 176, 0.2); background:rgba(240, 144, 176, 0.05); padding:2px 6px; border-radius:4px; font-weight:700;">BACKBAR</span>`;
+                    
+                tr.innerHTML = `
+                    <td style="font-weight: 700; color: var(--text-bright);">
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <span>${item.name}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-main); text-transform: capitalize; font-weight:500;">
+                                ${item.salon_category.replace('_', ' ')} • ${typeBadge}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-family: monospace; font-size: 0.8rem; color: var(--text-bright); font-weight:600;">${item.sku || 'N/A'}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-main);">${item.brand || 'No Brand'}</div>
+                    </td>
+                    <td style="font-weight: 700; color: ${isLow ? '#ff8080' : 'var(--text-bright)'};">
+                        ${item.quantity_in_stock} ${unit}
+                    </td>
+                    <td style="color: var(--text-main);">
+                        ${item.safety_stock_level} ${unit}
+                    </td>
+                    <td>
+                        ${statusBadge}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterInventoryItems() {
+            const search = document.getElementById('invSearchInput').value.toLowerCase().trim();
+            const category = document.getElementById('invCategorySelect').value;
+            const lowStock = document.getElementById('invLowStockCheckbox').checked;
+            
+            let filtered = currentInventory;
+            
+            if (search) {
+                filtered = filtered.filter(item => 
+                    item.name.toLowerCase().includes(search) || 
+                    (item.sku && item.sku.toLowerCase().includes(search)) || 
+                    (item.brand && item.brand.toLowerCase().includes(search))
+                );
+            }
+            
+            if (category !== 'all') {
+                filtered = filtered.filter(item => item.salon_category === category);
+            }
+            
+            if (lowStock) {
+                filtered = filtered.filter(item => item.quantity_in_stock <= item.safety_stock_level);
+            }
+            
+            renderInventoryTable(filtered);
+        }
+
+        function renderAlertsAndPurchaseOrders() {
+            const container = document.getElementById('invAlertsContainer');
+            container.innerHTML = '';
+            
+            if (activeAlerts.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-main); padding: 40px 20px; font-size: 0.85rem; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                        <i class="fa-solid fa-circle-check" style="font-size: 2.2rem; color: #56db95;"></i>
+                        <span style="font-weight: 700; color: var(--text-bright);">All Stock Levels Healthy</span>
+                        <span>No purchase orders required at this time.</span>
+                    </div>
+                `;
+                return;
+            }
+            
+            const supplierGroups = {};
+            activeAlerts.forEach(alert => {
+                const sName = alert.supplier_name || 'Unassigned Supplier';
+                if (!supplierGroups[sName]) {
+                    supplierGroups[sName] = [];
+                }
+                supplierGroups[sName].push(alert);
+            });
+            
+            Object.entries(supplierGroups).forEach(([supplierName, items]) => {
+                const card = document.createElement('div');
+                card.className = "inv-alert-card warning-glow";
+                
+                let itemsHTML = items.map(item => {
+                    const unit = item.inventory_type === 'product' ? 'pcs' : 'units';
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size: 0.8rem; border-bottom: 1px dotted var(--glass-border); padding-bottom: 6px; margin-bottom: 6px;">
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-weight: 700; color: var(--text-bright);">${item.name}</span>
+                                <span style="font-size: 0.7rem; color: #ff8080; font-weight: 600;">Current: ${item.quantity_in_stock} (Min: ${item.safety_stock_level})</span>
+                            </div>
+                            <span style="font-family:monospace; color: var(--accent-primary); font-weight:700;">+${item.reorder_quantity} ${unit}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding-bottom: 10px; margin-bottom: 10px;">
+                        <span style="font-weight:700; color: var(--text-bright); font-size: 0.85rem;"><i class="fa-solid fa-truck" style="color: var(--accent-primary); margin-right: 6px;"></i>${supplierName}</span>
+                        <span style="font-size:0.65rem; background:rgba(255, 74, 74, 0.1); color:#ff8080; border: 1px solid rgba(255, 74, 74, 0.2); padding:2px 6px; border-radius:4px; font-weight:700; letter-spacing:0.5px;">DRAFT PO</span>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column;">
+                        ${itemsHTML}
+                    </div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                        <span style="font-size:0.7rem; color:var(--text-main); font-weight: 600;">${items.length} low SKU${items.length > 1 ? 's' : ''}</span>
+                        <button class="btn btn-secondary" onclick="sendSupplierPO('${supplierName.replace(/'/g, "\\'")}')" style="font-size:0.7rem; padding: 6px 12px; border-radius: 8px; border:1px solid var(--accent-primary); color:var(--accent-primary); display:flex; align-items:center; gap:6px; background:transparent; font-weight: 700;">
+                            <i class="fa-solid fa-paper-plane" style="font-size:0.75rem;"></i> Send PO
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function sendSupplierPO(supplierName) {
+            showToastNotification(`Purchase order email sent to ${supplierName} successfully!`);
+        }
+
+        function populateTxItemSelect() {
+            const select = document.getElementById('txItemSelect');
+            select.innerHTML = '<option value="">-- Choose Product/Material --</option>';
+            
+            currentInventory.forEach((item, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${item.name} (${item.sku || 'No SKU'}) - Stock: ${item.quantity_in_stock}`;
+                select.appendChild(option);
+            });
+        }
+
+        function openStockTxModal() {
+            document.getElementById('txItemSelect').value = '';
+            document.getElementById('txTypeSelect').value = 'receive';
+            document.getElementById('txQuantity').value = '';
+            document.getElementById('txPerformedBy').value = 'Stylist Priya';
+            
+            document.getElementById('stockTxModal').classList.add('show');
+        }
+
+        function closeStockTxModal() {
+            document.getElementById('stockTxModal').classList.remove('show');
+        }
+
+        async function recordStockTransaction() {
+            const itemIndex = document.getElementById('txItemSelect').value;
+            const transactionType = document.getElementById('txTypeSelect').value;
+            const quantity = parseFloat(document.getElementById('txQuantity').value);
+            const performedBy = document.getElementById('txPerformedBy').value.trim();
+            
+            if (itemIndex === "" || isNaN(quantity) || !performedBy) {
+                alert("Please select an item, delta quantity, and enter your name.");
+                return;
+            }
+            
+            const item = currentInventory[itemIndex];
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/inventory/transaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: item.id,
+                        inventory_type: item.inventory_type,
+                        transaction_type: transactionType,
+                        quantity: quantity,
+                        performed_by: performedBy
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errDetails = await response.json();
+                    throw new Error(errDetails.detail || "Transaction failed");
+                }
+                
+                closeStockTxModal();
+                showToastNotification("Inventory transaction completed successfully!");
+                await loadInventoryTab();
+                
+            } catch (err) {
+                console.error("Stock movement failed", err);
+                alert("Failed to record stock movement: " + err.message);
+            }
+        }
+
+        // ============================================================================
+        // TAB NAVIGATION CONTROLLER
+        // ============================================================================
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            const updateDOM = () => {
+                // Hide all main panel views
+                document.getElementById('crmPanel').style.display = 'none';
+                document.getElementById('inventoryPanel').style.display = 'none';
+                
+                if (tabName === 'crm') {
+                    document.getElementById('crmPanel').style.display = 'grid';
+                    loadCrmTab();
+                } else if (tabName === 'inventory') {
+                    document.getElementById('inventoryPanel').style.display = 'grid';
+                    loadInventoryTab();
+                }
+                
+                const btnCrm = document.getElementById('tabBtn_crm');
+                const btnInv = document.getElementById('tabBtn_inventory');
+                
+                const activeStyle = "padding: 8px 16px; font-size: 0.8rem; background: var(--accent-primary); color: #07090e; box-shadow: none; border-radius: 10px;";
+                const inactiveStyle = "padding: 8px 16px; font-size: 0.8rem; border-radius: 10px; border: none; background: transparent;";
+                
+                [btnCrm, btnInv].forEach(btn => {
+                    if (btn) {
+                        btn.className = "btn btn-secondary";
+                        btn.style = inactiveStyle;
+                    }
+                });
+                
+                if (tabName === 'crm' && btnCrm) {
+                    btnCrm.className = "btn";
+                    btnCrm.style = activeStyle;
+                } else if (tabName === 'inventory' && btnInv) {
+                    btnInv.className = "btn";
+                    btnInv.style = activeStyle + " position: relative;";
+                    
+                    // Keep the badge in place inside the inline style block
+                    const badge = document.getElementById('headerAlertBadge');
+                    if (badge) {
+                        badge.style.position = 'absolute';
+                        badge.style.top = '-5px';
+                        badge.style.right = '-5px';
+                        badge.style.background = '#ff4a4a';
+                        badge.style.color = '#fff';
+                        badge.style.fontSize = '0.65rem';
+                        badge.style.fontWeight = '800';
+                        badge.style.padding = '2px 6px';
+                        badge.style.borderRadius = '10px';
+                        badge.style.lineHeight = '1';
+                    }
+                }
+            };
+
+            if (!document.startViewTransition) {
+                updateDOM();
+                return;
+            }
+            
+            document.startViewTransition(updateDOM);
+        }
+
+        // ============================================================================
+        // TOAST NOTIFICATIONS UTILITY
+        // ============================================================================
+
+        function showToastNotification(message) {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '24px';
+            toast.style.right = '24px';
+            toast.style.background = 'var(--bg-secondary)';
+            toast.style.border = '1px solid var(--accent-primary)';
+            toast.style.borderRadius = '12px';
+            toast.style.padding = '12px 20px';
+            toast.style.zIndex = '9999';
+            toast.style.color = 'var(--text-bright)';
+            toast.style.fontSize = '0.85rem';
+            toast.style.fontWeight = '700';
+            toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.5)';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '10px';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            
+            toast.innerHTML = `
+                <span style="color:var(--accent-primary);">✨</span>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>

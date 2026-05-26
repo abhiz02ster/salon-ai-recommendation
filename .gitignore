@@ -10,3 +10,6 @@ salon_management.db
 backend/data/
 .DS_Store
 backend/server.log
+local_dev/
+backend/local_dev/
+frontend/local_dev/

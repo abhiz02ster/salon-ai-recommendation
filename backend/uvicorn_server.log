@@ -1,0 +1,47 @@
+INFO:     Will watch for changes in these directories: ['/Users/abhishek/Downloads/experiments/salon-ai-recommendation/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [4574] using StatReload
+✓ Unified google-genai client initialized for Vertex AI project salaipoc in us-central1
+✓ Database schema initialized successfully
+✓ Local SQLite database initialized
+✓ Mounted frontend directory from /Users/abhishek/Downloads/experiments/salon-ai-recommendation/frontend
+✓ Mounted client photos static directory from /Users/abhishek/Downloads/experiments/salon-ai-recommendation/backend/data/photos
+INFO:     Started server process [4580]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+✓ Unified google-genai client initialized for Vertex AI project salaipoc in us-central1
+✓ Database schema initialized successfully
+✓ Local SQLite database initialized
+✓ Mounted frontend directory from /Users/abhishek/Downloads/experiments/salon-ai-recommendation/frontend
+✓ Mounted client photos static directory from /Users/abhishek/Downloads/experiments/salon-ai-recommendation/backend/data/photos
+INFO:     127.0.0.1:51078 - "GET /frontend/index.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51079 - "GET /frontend/admin.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51078 - "GET /api/crm/clients HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51079 - "GET /api/inventory/alerts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51085 - "GET /api/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51085 - "GET /api/inventory/alerts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51085 - "GET /api/suppliers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51085 - "GET /api/crm/clients HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51085 - "GET /api/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51085 - "GET /api/inventory/alerts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51085 - "GET /api/suppliers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51088 - "GET /api/crm/clients HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51096 - "GET /api/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51096 - "GET /api/inventory/alerts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51096 - "GET /api/suppliers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51096 - "GET /api/crm/clients HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51098 - "POST /check-in HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51098 - "GET /api/crm/clients HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51098 - "GET /api/crm/clients/2/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51103 - "GET /frontend/index.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51106 - "POST /check-in HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51213 - "GET /frontend/index.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51215 - "POST /check-in HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51219 - "GET /frontend/admin.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51219 - "GET /api/inventory/alerts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51219 - "GET /api/crm/clients HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51219 - "GET /api/crm/clients/1/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51221 - "GET /api/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51221 - "GET /api/inventory/alerts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51221 - "GET /api/suppliers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51223 - "GET /api/crm/clients HTTP/1.1" 200 OK

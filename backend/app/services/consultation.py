@@ -10,11 +10,28 @@ import app.agents as agents
 import app.services.media as media
 from app.api.schemas import ClientAttributes, HairRecommendation, RecommendationResponse
 
+def resolve_recommendation_products(products_needed: list) -> tuple:
+    """
+    Check stock levels for needed products and find alternatives.
+    Returns (products_status list, suffix_notes string).
+    """
+    status_list = []
+    notes = []
+    for prod_name in products_needed:
+        status = database.check_product_stock_and_find_alternative(prod_name)
+        status_list.append(status)
+        if not status.get("in_stock", False):
+            if status.get("substitute_found", False):
+                notes.append(f"We recommend applying {status['substitute_name']} as a substitute for {prod_name} to achieve a similar glossy finish.")
+            else:
+                notes.append(f"{prod_name} is currently out of stock.")
+    suffix = "\n\n" + " ".join(notes) if notes else ""
+    return status_list, suffix
+
 async def analyze_and_recommend(
     front_bytes: bytes,
     left_bytes: Optional[bytes],
     right_bytes: Optional[bytes],
-    height: Optional[str],
     client_id: Optional[int]
 ) -> RecommendationResponse:
     """
@@ -33,30 +50,26 @@ async def analyze_and_recommend(
     if front_image_pil.mode != "RGB":
         front_image_pil = front_image_pil.convert("RGB")
 
-    # Parse height
-    client_height = None
-    if height:
-        try:
-            client_height = float(height)
-        except ValueError:
-            pass
+
 
     # Run Profiler Agent to extract physical attributes
     profile = await agents.run_profiler_agent(front_bytes, left_bytes, right_bytes)
     
     # Run Stylist Agent to generate styling recommendations
-    rec_list = await agents.run_stylist_agent(profile, feedback=None, height=client_height)
+    rec_list = await agents.run_stylist_agent(profile, feedback=None)
     
     # Format recommendations to response models
     recommendations = []
     for item in rec_list.recommendations:
+        status_list, suffix = resolve_recommendation_products(item.products_needed)
         rec = HairRecommendation(
             style_name=item.style_name,
-            description=item.description,
+            description=item.description + suffix,
             suitability_score=item.suitability_score,
             reasoning=item.reasoning,
             maintenance_tips=item.maintenance_tips,
             products_needed=item.products_needed,
+            products_status=status_list,
             visualization_url=None,
             video_url=None
         )
@@ -64,7 +77,6 @@ async def analyze_and_recommend(
 
     # Build client attributes object
     client_attrs = ClientAttributes(
-        height=client_height,
         gender=profile.gender,
         face_shape=profile.face_shape,
         body_type="mesomorph",
@@ -205,21 +217,21 @@ async def refine_recommendations(consultation_id: int, feedback: str) -> Recomme
         notes="Refined based on feedback."
     )
     
-    client_height = client_attrs_raw.get("height")
-    
     # Run Stylist Agent with hairdresser feedback
-    result = await agents.run_stylist_agent(profile, feedback, client_height)
+    result = await agents.run_stylist_agent(profile, feedback)
     
     # Format recommendations
     recommendations = []
     for item in result.recommendations:
+        status_list, suffix = resolve_recommendation_products(item.products_needed)
         rec = HairRecommendation(
             style_name=item.style_name,
-            description=item.description,
+            description=item.description + suffix,
             suitability_score=item.suitability_score,
             reasoning=item.reasoning,
             maintenance_tips=item.maintenance_tips,
             products_needed=item.products_needed,
+            products_status=status_list,
             visualization_url=None,
             video_url=None
         )
@@ -242,7 +254,6 @@ async def refine_recommendations(consultation_id: int, feedback: str) -> Recomme
         front_image_pil = Image.new("RGB", (256, 256), color="white")
 
     client_attrs = ClientAttributes(
-        height=client_height,
         gender=profile.gender,
         face_shape=profile.face_shape,
         body_type="mesomorph",

@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salon AI Master Stylist</title>
+    <title>Salon AI Master Stylist - Consultation Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0b0c10;
-            --bg-secondary: #1f2833;
-            --accent-primary: #66fcf1;
-            --accent-secondary: #45f3ff;
-            --text-main: #c5c6c7;
+            /* Default Theme: Midnight Gold */
+            --bg-primary: #07090e;
+            --bg-secondary: #0e121b;
+            --accent-primary: #deb876;
+            --accent-secondary: #f2dec2;
+            --text-main: #abb2bf;
             --text-bright: #ffffff;
-            --glass-bg: rgba(31, 40, 51, 0.45);
-            --glass-border: rgba(102, 252, 241, 0.15);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --glass-bg: rgba(14, 18, 27, 0.65);
+            --glass-border: rgba(222, 184, 118, 0.15);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+            --transition-speed: 0.3s;
+        }
+
+        body, .sidebar, .workspace, .capture-panel, .recommendation-card, .analysis-card, .analysis-row, header, .slot-btn, .btn, input, select, textarea {
+            transition: background 0.5s ease, background-color 0.5s ease, border-color 0.5s ease, color 0.3s ease, box-shadow 0.5s ease;
         }
 
         * {
@@ -30,7 +37,39 @@
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
-            overflow-x: hidden;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% -20%, rgba(222, 184, 118, 0.08), transparent 50%);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Luxury Physical Noise Texture Overlay */
+        .textured-element {
+            position: relative;
+        }
+        .textured-element::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            border-radius: inherit;
         }
 
         /* Layout wrapper */
@@ -49,8 +88,7 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            transition: transform 0.3s ease;
-            z-index: 100;
+            z-index: 10;
         }
 
         .sidebar-header {
@@ -63,39 +101,55 @@
 
         .sidebar-header h2 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: var(--text-bright);
+            letter-spacing: 0.5px;
         }
 
         .history-list {
             flex: 1;
             overflow-y: auto;
-            padding: 16px;
+            padding: 20px;
         }
 
         .history-item {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 16px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--transition-speed) ease;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+            position: relative;
         }
 
         .history-item:hover {
             border-color: var(--accent-primary);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 252, 241, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .history-item.active {
             border-color: var(--accent-primary);
-            background: rgba(102, 252, 241, 0.08);
+            background: rgba(222, 184, 118, 0.08);
+            box-shadow: 0 0 15px rgba(222, 184, 118, 0.15);
+        }
+
+        .history-item::after {
+            content: "";
+            position: absolute;
+            left: 0; top: 25%; bottom: 25%; width: 3px;
+            background: var(--accent-primary);
+            border-radius: 0 4px 4px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .history-item.active::after {
+            opacity: 1;
         }
 
         .history-thumb {
@@ -103,7 +157,8 @@
             height: 50px;
             border-radius: 8px;
             object-fit: cover;
-            background: #2b313a;
+            background: #121820;
+            border: 1px solid var(--glass-border);
         }
 
         .history-info {
@@ -112,17 +167,18 @@
         }
 
         .history-name {
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-bright);
             margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-size: 0.85rem;
         }
 
         .history-date {
-            font-size: 0.8rem;
-            color: #8892b0;
+            font-size: 0.75rem;
+            color: var(--text-main);
         }
 
         /* Main panel workspace */
@@ -135,14 +191,14 @@
         }
 
         header {
-            padding: 24px 40px;
+            padding: 20px 40px;
             border-bottom: 1px solid var(--glass-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
-            background: rgba(11, 12, 16, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(20px);
             position: sticky;
             top: 0;
             z-index: 50;
@@ -150,26 +206,27 @@
 
         header h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 800;
             color: var(--text-bright);
-            background: linear-gradient(45deg, var(--text-bright) 30%, var(--accent-primary) 100%);
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text-bright) 30%, var(--accent-primary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         header p {
-            color: #8892b0;
-            font-size: 0.95rem;
+            color: var(--text-main);
+            font-size: 0.85rem;
             margin-top: 4px;
         }
 
         /* Workspace container */
         .content-container {
-            padding: 40px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
-            gap: 40px;
+            gap: 30px;
             flex: 1;
         }
 
@@ -184,12 +241,13 @@
 
         .section-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             color: var(--text-bright);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+            letter-spacing: 0.5px;
         }
 
         /* Camera flow layout */
@@ -222,6 +280,71 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1); /* mirror effect */
+        }
+
+        /* Polaroid style preview card */
+        .polaroid-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px 16px 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: var(--glass-shadow);
+            aspect-ratio: 4/3.8;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .polaroid-photo-frame {
+            width: 100%;
+            flex: 1;
+            background: #07090e;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .polaroid-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 12px;
+            padding: 20px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .polaroid-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transform: scale(1.02);
+            transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+        }
+
+        .polaroid-image.developed {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .polaroid-caption {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+            text-align: center;
+            border-top: 1px dashed var(--glass-border);
+            padding-top: 12px;
         }
 
         /* Camera guides */
@@ -258,70 +381,6 @@
             z-index: 10;
         }
 
-        /* Capture targets selector */
-        .capture-slots {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .slot-btn {
-            background: rgba(31, 40, 51, 0.6);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .slot-btn.active {
-            border-color: var(--accent-primary);
-            background: rgba(102, 252, 241, 0.08);
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.15);
-        }
-
-        .slot-btn.captured {
-            border-color: #2ec4b6;
-        }
-
-        .slot-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .slot-status {
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: #2b313a;
-            color: #8892b0;
-        }
-
-        .slot-btn.captured .slot-status {
-            background: rgba(46, 196, 182, 0.15);
-            color: #2ec4b6;
-        }
-
-        .slot-btn.active .slot-status {
-            background: rgba(102, 252, 241, 0.15);
-            color: var(--accent-primary);
-        }
-
-        .slot-preview {
-            width: 60px;
-            height: 45px;
-            border-radius: 6px;
-            object-fit: cover;
-            background: #121820;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
         /* Form configuration items */
         .config-row {
             display: grid;
@@ -338,16 +397,18 @@
 
         .form-group label {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-group input, .form-group select {
-            background: rgba(11, 12, 16, 0.6);
+            background: rgba(7, 9, 14, 0.6);
             border: 1px solid var(--glass-border);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 12px 16px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: var(--text-bright);
             outline: none;
             transition: all 0.3s;
@@ -355,231 +416,243 @@
 
         .form-group input:focus, .form-group select:focus {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 10px rgba(102, 252, 241, 0.15);
+            box-shadow: 0 0 10px rgba(222, 184, 118, 0.2);
         }
 
         /* Premium Buttons */
         .btn {
-            background: linear-gradient(135deg, #45f3ff 0%, #1f2833 100%);
-            background-size: 200% auto;
-            color: #0b0c10;
+            background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);
+            color: #07090e;
             border: none;
-            padding: 14px 28px;
-            font-size: 1rem;
+            padding: 12px 24px;
+            font-size: 0.85rem;
             font-weight: 700;
-            border-radius: 50px;
+            border-radius: 30px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 252, 241, 0.2);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 15px rgba(222, 184, 118, 0.15);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .btn:hover {
+        .btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 252, 241, 0.35);
+            box-shadow: 0 6px 20px rgba(222, 184, 118, 0.3);
+            filter: brightness(1.05);
         }
 
-        .btn:active {
+        .btn:active:not(:disabled) {
             transform: translateY(0);
         }
 
         .btn:disabled {
-            background: #2b313a;
-            color: #8892b0;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
         .btn-secondary {
-            background: rgba(31, 40, 51, 0.5);
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--glass-border);
             color: var(--text-bright);
             box-shadow: none;
         }
 
-        .btn-secondary:hover {
-            background: rgba(102, 252, 241, 0.08);
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(222, 184, 118, 0.08);
             border-color: var(--accent-primary);
         }
 
-        /* Loader Overlay styling (Antigravity Loading) */
-        .loading-overlay {
+        /* Check-in Landing Page Overlay */
+        .checkin-overlay, .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(11, 12, 16, 0.92);
-            backdrop-filter: blur(15px);
-            z-index: 1000;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(25px);
+            z-index: 2000;
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            opacity: 0;
+            transition: display 0.4s, opacity 0.4s ease-out;
+            transition-behavior: allow-discrete;
+        }
+
+        .checkin-overlay.show, .loading-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .checkin-card, .loading-ui {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 95%;
+            max-width: 480px;
+            box-shadow: var(--glass-shadow);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .checkin-overlay.show .checkin-card, .loading-overlay.show .loading-ui {
+            transform: translateY(0) scale(1);
+        }
+
+        @starting-style {
+            .checkin-overlay.show, .loading-overlay.show {
+                opacity: 0;
+            }
+            .checkin-overlay.show .checkin-card, .loading-overlay.show .loading-ui {
+                transform: translateY(30px) scale(0.95);
+            }
         }
 
         /* Gravity-Defying Orbs */
         .orb {
             position: absolute;
             border-radius: 50%;
-            filter: blur(60px);
-            opacity: 0.15;
+            filter: blur(80px);
+            opacity: 0.12;
             mix-blend-mode: screen;
             pointer-events: none;
         }
 
         .orb-cyan {
-            width: 350px;
-            height: 350px;
+            width: 400px;
+            height: 400px;
             background: var(--accent-primary);
-            animation: floatCyan 18s ease-in-out infinite alternate;
+            animation: floatCyan 25s ease-in-out infinite alternate;
         }
 
         .orb-purple {
-            width: 400px;
-            height: 400px;
+            width: 450px;
+            height: 450px;
             background: #9b5de5;
-            animation: floatPurple 22s ease-in-out infinite alternate;
+            animation: floatPurple 30s ease-in-out infinite alternate;
         }
 
         .orb-pink {
-            width: 300px;
-            height: 300px;
+            width: 350px;
+            height: 350px;
             background: #f15bb5;
-            animation: floatPink 15s ease-in-out infinite alternate;
+            animation: floatPink 20s ease-in-out infinite alternate;
         }
 
         @keyframes floatCyan {
-            0% { transform: translate(-80px, -50px) scale(1); }
-            100% { transform: translate(120px, 150px) scale(1.2); }
+            0% { transform: translate(-100px, -80px) scale(1); }
+            100% { transform: translate(150px, 180px) scale(1.2); }
         }
 
         @keyframes floatPurple {
-            0% { transform: translate(100px, 80px) scale(1.1); }
-            100% { transform: translate(-100px, -150px) scale(0.9); }
+            0% { transform: translate(150px, 100px) scale(1.1); }
+            100% { transform: translate(-120px, -180px) scale(0.9); }
         }
 
         @keyframes floatPink {
-            0% { transform: translate(-150px, 150px) scale(0.9); }
-            100% { transform: translate(150px, -80px) scale(1.15); }
+            0% { transform: translate(-180px, 180px) scale(0.9); }
+            100% { transform: translate(180px, -100px) scale(1.15); }
         }
 
-        /* Loading UI content */
-        .loading-ui {
-            width: 85%;
-            max-width: 600px;
-            text-align: center;
-            z-index: 10;
-        }
-
-        /* Scanning container with laser line */
-        .scanning-holder {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
+        /* Radar / Soundwave Scan Animation */
+        .radar-scanner {
             position: relative;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 24px auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .scan-preview {
+        .radar-photo {
             width: 120px;
             height: 120px;
-            border-radius: 12px;
+            border-radius: 50%;
             object-fit: cover;
-            border: 1px solid var(--glass-border);
-            opacity: 0.7;
+            border: 2px solid var(--accent-primary);
+            z-index: 2;
+            box-shadow: 0 0 20px rgba(222, 184, 118, 0.3);
         }
 
-        .laser-line {
+        .radar-wave {
             position: absolute;
-            left: 0;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-            box-shadow: 0 0 15px var(--accent-primary);
-            animation: laserScan 2.5s linear infinite;
+            height: 100%;
+            border: 1px solid var(--accent-primary);
+            border-radius: 50%;
+            opacity: 0;
+            z-index: 1;
+            animation: radarPulse 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
         }
 
-        @keyframes laserScan {
-            0% { top: 0%; }
-            50% { top: 100%; }
-            100% { top: 0%; }
+        .radar-wave:nth-child(2) {
+            animation-delay: 0.8s;
         }
 
-        /* Floating dots animation */
-        .loader-ring {
-            display: inline-block;
-            position: relative;
-            width: 80px;
-            height: 80px;
+        .radar-wave:nth-child(3) {
+            animation-delay: 1.6s;
+        }
+
+        @keyframes radarPulse {
+            0% {
+                transform: scale(0.75);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+                box-shadow: 0 0 30px var(--accent-primary);
+            }
+        }
+
+        /* Soundwave line effect */
+        .soundwave-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            height: 30px;
             margin-bottom: 20px;
         }
 
-        .loader-ring div {
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--accent-primary);
-            animation: loaderRing 1.2s linear infinite;
+        .soundwave-bar {
+            width: 3px;
+            height: 8px;
+            background-color: var(--accent-primary);
+            border-radius: 2px;
+            animation: soundwaveBounce 1.2s ease-in-out infinite alternate;
         }
 
-        .loader-ring div:nth-child(1) { top: 8px; left: 8px; animation-delay: 0s; }
-        .loader-ring div:nth-child(2) { top: 8px; left: 32px; animation-delay: -0.4s; }
-        .loader-ring div:nth-child(3) { top: 8px; left: 56px; animation-delay: -0.8s; }
-        .loader-ring div:nth-child(4) { top: 32px; left: 8px; animation-delay: -0.4s; }
-        .loader-ring div:nth-child(5) { top: 32px; left: 56px; animation-delay: -0.8s; }
-        .loader-ring div:nth-child(6) { top: 56px; left: 8px; animation-delay: -0.8s; }
-        .loader-ring div:nth-child(7) { top: 56px; left: 32px; animation-delay: -1.2s; }
-        .loader-ring div:nth-child(8) { top: 56px; left: 56px; animation-delay: -1.6s; }
+        .soundwave-bar:nth-child(2n) { animation-delay: 0.15s; height: 16px; }
+        .soundwave-bar:nth-child(3n) { animation-delay: 0.3s; height: 24px; }
+        .soundwave-bar:nth-child(4n) { animation-delay: 0.45s; height: 12px; }
+        .soundwave-bar:nth-child(5n) { animation-delay: 0.6s; height: 28px; }
 
-        @keyframes loaderRing {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.3; }
+        @keyframes soundwaveBounce {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1.5); }
         }
 
-        .loading-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.6rem;
-            color: var(--text-bright);
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-
-        /* Terminal style log box */
-        .console-box {
-            background: rgba(11, 12, 16, 0.85);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 16px;
-            font-family: monospace;
-            font-size: 0.85rem;
-            color: #a8b2d1;
-            text-align: left;
-            height: 180px;
-            overflow-y: auto;
-            margin-top: 24px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-            line-height: 1.5;
-        }
-
-        .console-line {
-            margin-bottom: 6px;
-            opacity: 0;
-            transform: translateY(5px);
-            animation: showLine 0.2s forwards;
-        }
-
-        .console-line.success { color: #2ec4b6; }
-        .console-line.agent { color: var(--accent-primary); }
-
-        @keyframes showLine {
-            to { opacity: 1; transform: translateY(0); }
+        #loadingQuoteText {
+            transition: opacity 0.3s ease;
         }
 
         /* Results section */
@@ -626,6 +699,16 @@
             grid-template-columns: 1fr 1.2fr;
             min-height: 520px;
             box-shadow: var(--glass-shadow);
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        @starting-style {
+            .recommendation-card {
+                opacity: 0;
+                transform: translateY(20px);
+            }
         }
 
         @media (max-width: 900px) {
@@ -635,7 +718,7 @@
         }
 
         .rec-media-side {
-            background: #121820;
+            background: rgba(7, 9, 14, 0.4);
             padding: 30px;
             display: flex;
             flex-direction: column;
@@ -656,11 +739,12 @@
         .rec-image-holder {
             width: 100%;
             aspect-ratio: 1;
-            max-width: 320px;
-            border-radius: 12px;
+            max-width: 300px;
+            border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--glass-border);
             background: #000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
 
         .rec-image-holder img {
@@ -671,11 +755,12 @@
 
         .rec-video-holder {
             width: 100%;
-            max-width: 320px;
-            border-radius: 12px;
+            max-width: 300px;
+            border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--glass-border);
             background: #000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
 
         .rec-video-holder video {
@@ -702,23 +787,24 @@
 
         .rec-title-box h3 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: var(--text-bright);
         }
 
         .rec-score-badge {
-            background: rgba(102, 252, 241, 0.15);
+            background: rgba(222, 184, 118, 0.1);
             color: var(--accent-primary);
-            border: 1px solid var(--accent-primary);
+            border: 1px solid var(--glass-border);
             padding: 6px 14px;
             border-radius: 20px;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
         }
 
         .rec-description {
-            font-size: 1rem;
+            font-size: 0.95rem;
             line-height: 1.6;
             color: var(--text-main);
             margin-bottom: 24px;
@@ -730,7 +816,7 @@
 
         .rec-list-section h4 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             color: var(--text-bright);
             margin-bottom: 12px;
             display: flex;
@@ -745,8 +831,8 @@
 
         .rec-list-section li {
             padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.9rem;
             line-height: 1.5;
             display: flex;
             gap: 10px;
@@ -764,7 +850,7 @@
             transform: translateY(-50%);
             width: 48px;
             height: 48px;
-            background: rgba(31, 40, 51, 0.8);
+            background: rgba(14, 18, 27, 0.85);
             border: 1px solid var(--glass-border);
             border-radius: 50%;
             cursor: pointer;
@@ -779,8 +865,8 @@
 
         .carousel-arrow:hover {
             background: var(--accent-primary);
-            color: #0b0c10;
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.4);
+            color: #07090e;
+            box-shadow: 0 0 15px rgba(222, 184, 118, 0.4);
         }
 
         .carousel-arrow-left { left: -24px; }
@@ -797,7 +883,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #2b313a;
+            background: rgba(255, 255, 255, 0.1);
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -811,24 +897,26 @@
         /* Refinement form box */
         .refinement-box {
             margin-top: 30px;
-            background: rgba(11, 12, 16, 0.4);
+            background: rgba(7, 9, 14, 0.3);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 20px;
         }
 
         .refinement-box h4 {
             color: var(--text-bright);
             margin-bottom: 12px;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .refinement-box textarea {
             width: 100%;
-            height: 60px;
-            background: rgba(11, 12, 16, 0.6);
+            height: 70px;
+            background: rgba(7, 9, 14, 0.6);
             border: 1px solid var(--glass-border);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px;
             color: var(--text-bright);
             font-family: inherit;
@@ -837,10 +925,6 @@
             margin-bottom: 12px;
             font-size: 0.9rem;
             transition: border-color 0.3s;
-        }
-
-        .refinement-box textarea:focus {
-            border-color: var(--accent-primary);
         }
 
         /* Dotted analysis table */
@@ -859,7 +943,7 @@
         }
 
         .analysis-row {
-            background: rgba(11, 12, 16, 0.4);
+            background: rgba(7, 9, 14, 0.4);
             border: 1px solid var(--glass-border);
             border-radius: 12px;
             padding: 16px;
@@ -869,10 +953,11 @@
         }
 
         .analysis-row label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             font-weight: 700;
-            color: #8892b0;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
         }
 
         .analysis-val-box {
@@ -882,17 +967,17 @@
         }
 
         .analysis-val {
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--text-bright);
         }
 
         .confidence-badge {
-            background: rgba(102, 252, 241, 0.15);
+            background: rgba(222, 184, 118, 0.12);
             color: var(--accent-primary);
             padding: 2px 6px;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
         }
 
@@ -917,7 +1002,42 @@
         }
     </style>
 </head>
-<body>
+<body class="textured-element">
+
+    <!-- Client Check-in Landing Page Overlay -->
+    <div class="checkin-overlay" id="checkInOverlay">
+        <div class="orb orb-cyan"></div>
+        <div class="orb orb-purple"></div>
+        <div class="orb orb-pink"></div>
+        
+        <div class="checkin-card textured-element">
+            <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--text-bright); background: linear-gradient(45deg, var(--text-bright) 30%, var(--accent-primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; text-align: center;">
+                Master Stylist AI
+            </h1>
+            <p style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 10px; text-align: center;">
+                Check-in to start your customized AI profiling consultation.
+            </p>
+            
+            <div style="text-align: left; display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label for="checkin_firstName">First Name</label>
+                    <input type="text" id="checkin_firstName" placeholder="e.g. Rahul" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkin_lastName">Last Name</label>
+                    <input type="text" id="checkin_lastName" placeholder="e.g. Kumar" required>
+                </div>
+                <div class="form-group">
+                    <label for="checkin_phone">Phone / Mobile Number</label>
+                    <input type="tel" id="checkin_phone" placeholder="e.g. 9999999999" required>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="submitCheckIn()" style="margin-top: 10px; width: 100%; height: 50px; font-size: 1rem; border-radius: 12px;">
+                Start Consultation Session
+            </button>
+        </div>
+    </div>
 
     <div class="app-wrapper">
 
@@ -925,11 +1045,13 @@
         <div class="sidebar">
             <div class="sidebar-header">
                 <h2>Consultation History</h2>
-                <button class="btn btn-secondary" onclick="startNewSession()" style="padding: 8px 16px; font-size: 0.85rem;">New Session</button>
+                <button class="btn btn-secondary" onclick="changeClient()" style="padding: 8px 16px; font-size: 0.75rem; border-radius: 8px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Exit
+                </button>
             </div>
             <div class="history-list" id="historyList">
                 <!-- Populated dynamically -->
-                <div style="text-align: center; color: #8892b0; padding-top: 40px; font-size: 0.95rem;">
+                <div style="text-align: center; color: var(--text-main); padding-top: 40px; font-size: 0.85rem;">
                     No past sessions found
                 </div>
             </div>
@@ -940,11 +1062,30 @@
             <header>
                 <div>
                     <h1>Salon AI Master Stylist</h1>
-                    <p id="headerSubtitle">iPad & Tablet Professional Style Consultant</p>
+                    <p id="headerSubtitle" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="headerClientLabel" style="color: var(--accent-primary); font-weight: 600;">No Client Checked In</span>
+                        <span style="color: var(--glass-border);">|</span>
+                        <span>iPad & Tablet Professional Style Consultant</span>
+                    </p>
                 </div>
-                <div>
+                <!-- Navigation Tabs -->
+                <div style="display: flex; background: rgba(7, 9, 14, 0.6); padding: 6px 16px; border-radius: 14px; border: 1px solid var(--glass-border); gap: 8px; font-size: 0.8rem; color: var(--accent-primary); font-weight: 700; align-items: center;">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <span>Consultation Mode</span>
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <!-- Theme Selector Dropdown -->
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label for="themeSelect" style="font-size: 0.8rem; color: var(--text-main); font-weight: 500;">Theme:</label>
+                        <select id="themeSelect" onchange="applyTheme(this.value)" style="background: rgba(7, 9, 14, 0.6); border: 1px solid var(--glass-border); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; color: var(--text-bright); outline: none; cursor: pointer;">
+                            <option value="midnight">Midnight Noir</option>
+                            <option value="rose">Sunset Rose</option>
+                            <option value="amber">Cozy Amber</option>
+                            <option value="jade">Forest Jade</option>
+                        </select>
+                    </div>
                     <button class="btn" id="analyzeBtn" onclick="submitAnalysis()" disabled>
-                        <span>Analyze Profiling Feed</span>
+                        <span>Analyze Portrait</span>
                     </button>
                 </div>
             </header>
@@ -954,17 +1095,23 @@
                 <!-- Capture Panel -->
                 <div class="capture-panel" id="capturePanel">
                     <div class="section-title">
-                        <span>📸 Multi-Angle Client Profiling Feed</span>
+                        <span>📸 Client Face Profile Capture</span>
                     </div>
 
                     <div class="camera-grid">
                         <!-- Webcam Feed Side -->
-                        <div class="camera-feed-box">
-                            <video id="webcam" autoplay playsinline></video>
+                        <div class="camera-feed-box" id="webcamFeedBox">
+                            <video id="webcam" autoplay playsinline style="transform: scaleX(-1);"></video>
                             
-                            <!-- Guide overlay showing front, left, or right profile silhouette -->
+                            <!-- Webcam placeholder when deactivated -->
+                            <div id="cameraDeactivatedPlaceholder" style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 30px; width: 100%; height: 100%;">
+                                <i class="fa-solid fa-eye-slash" style="font-size: 3.2rem; color: var(--accent-primary); opacity: 0.85;"></i>
+                                <span style="font-size: 1rem; font-weight: 700; color: var(--text-bright);">Camera Privacy Mode Active</span>
+                                <span style="font-size: 0.8rem; color: var(--text-main); max-width: 280px; line-height: 1.4;">Webcam stream is disabled to protect client privacy. Click 'Reactivate Camera' to retake photo.</span>
+                            </div>
+
+                            <!-- Guide overlay showing front profile silhouette -->
                             <div class="silhouette-guide" id="silhouetteGuide">
-                                <!-- Front Face SVG default -->
                                 <svg viewBox="0 0 100 100" id="svgFront">
                                     <path d="M50,15 C32,15 32,35 32,50 C32,65 38,78 50,78 C62,78 68,65 68,50 C68,35 68,15 50,15 Z" />
                                     <path d="M50,78 C40,82 35,90 35,95 L65,95 C65,90 60,82 50,78 Z" />
@@ -973,60 +1120,26 @@
 
                             <div class="camera-controls">
                                 <select id="videoSource" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px;" onchange="startWebcam()"></select>
-                                <button class="btn" onclick="capturePhoto()" style="padding: 10px 20px; font-size: 0.9rem;">Capture Image</button>
+                                <button class="btn" id="captureBtn" onclick="handleCaptureClick()" style="padding: 10px 20px; font-size: 0.85rem; min-width: 170px;">
+                                    <i class="fa-solid fa-camera" style="margin-right: 6px;"></i>Capture Photo
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Viewpoint Slots Side -->
-                        <div class="capture-slots">
-                            <!-- Front Slot -->
-                            <div class="slot-btn active" id="slot_front" onclick="selectSlot('front')">
-                                <div class="slot-info">
-                                    <img class="slot-preview" id="prev_front" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>">
-                                    <div>
-                                        <div style="font-weight: 700; color: var(--text-bright);">Front Profile</div>
-                                        <div style="font-size: 0.8rem; color: #8892b0;">Align face in center guide</div>
-                                    </div>
+                        <!-- Captured Preview Card Side (Polaroid style) -->
+                        <div class="polaroid-card">
+                            <div class="polaroid-photo-frame">
+                                <div id="capturedPreviewContainer" class="polaroid-placeholder">
+                                    <i class="fa-solid fa-user-circle" style="font-size: 3.5rem; color: var(--glass-border); opacity: 0.6;"></i>
+                                    <h3 style="color: var(--text-bright); font-family: 'Outfit'; font-weight: 700; font-size: 1.05rem; margin: 0;">Captured Portrait</h3>
+                                    <p style="font-size: 0.8rem; color: var(--text-main); max-width: 230px; margin: 0; line-height: 1.4;">Align head in guide overlay, then capture to analyze facial geometry & hair metrics.</p>
                                 </div>
-                                <span class="slot-status">ACTIVE</span>
+                                <img id="capturedImageElement" class="polaroid-image" src="">
                             </div>
-
-                            <!-- Left Slot -->
-                            <div class="slot-btn" id="slot_left" onclick="selectSlot('left')">
-                                <div class="slot-info">
-                                    <img class="slot-preview" id="prev_left" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>">
-                                    <div>
-                                        <div style="font-weight: 700; color: var(--text-bright);">Left Profile (90°)</div>
-                                        <div style="font-size: 0.8rem; color: #8892b0;">Turn head to right</div>
-                                    </div>
-                                </div>
-                                <span class="slot-status">PENDING</span>
+                            <div class="polaroid-caption">
+                                <span id="clientDisplayInfo" style="font-family: 'Outfit'; font-weight: 700; font-size: 0.9rem; color: var(--text-bright);">Client Portrait</span>
+                                <span style="font-size: 0.75rem; color: var(--text-main);" id="portraitTimestamp">Awaiting capture...</span>
                             </div>
-
-                            <!-- Right Slot -->
-                            <div class="slot-btn" id="slot_right" onclick="selectSlot('right')">
-                                <div class="slot-info">
-                                    <img class="slot-preview" id="prev_right" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>">
-                                    <div>
-                                        <div style="font-weight: 700; color: var(--text-bright);">Right Profile (90°)</div>
-                                        <div style="font-size: 0.8rem; color: #8892b0;">Turn head to left</div>
-                                    </div>
-                                </div>
-                                <span class="slot-status">PENDING</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="config-row">
-                        <div class="form-group">
-                            <label for="height">Client Height (cm)</label>
-                            <input type="number" id="height" placeholder="Enter height in cm (e.g. 175)" oninput="checkFormValidity()">
-                        </div>
-                        <div class="form-group">
-                            <label for="clientSelect">Select Client Profile</label>
-                            <select id="clientSelect">
-                                <option value="1">Walk-in Client (Default)</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -1035,7 +1148,7 @@
                 <div class="results-section" id="resultsSection" style="display: none;">
                     
                     <div class="section-title">
-                        <span>✨ Collaborating Stylist recommendations</span>
+                        <span>✨ Collaborating Stylist Recommendations</span>
                     </div>
 
                     <!-- Swipeable Carousel Container -->
@@ -1055,9 +1168,9 @@
                     </div>
 
                     <!-- Attribute Analysis Card -->
-                    <div class="analysis-card">
-                        <div class="section-title" style="font-size: 1.15rem; margin-bottom: 20px;">
-                            <span>📊 Collaborating Profiler Agent: Extraction Details</span>
+                    <div class="analysis-card textured-element">
+                        <div class="section-title" style="font-size: 1.1rem; margin-bottom: 20px;">
+                            <span><i class="fa-solid fa-chart-simple" style="color: var(--accent-primary); font-size: 0.95rem;"></i> Collaborating Profiler Agent: Extraction Details</span>
                         </div>
                         <div class="analysis-table">
                             <div class="analysis-row">
@@ -1104,7 +1217,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
             </div>
@@ -1118,49 +1230,55 @@
         <div class="orb orb-purple"></div>
         <div class="orb orb-pink"></div>
 
-        <div class="loading-ui">
-            <div class="loader-ring">
-                <div></div><div></div><div></div><div></div>
-                <div></div><div></div><div></div><div></div>
+        <div class="loading-ui textured-element">
+            <div class="radar-scanner">
+                <div class="radar-wave"></div>
+                <div class="radar-wave"></div>
+                <div class="radar-wave"></div>
+                <img class="radar-photo" id="scanPrevFront" src="">
             </div>
 
             <div class="loading-title" id="loadingTitle">Running Multi-Agent Synthesis</div>
             
-            <div class="scanning-holder">
-                <img class="scan-preview" id="scanPrevFront" src="">
-                <img class="scan-preview" id="scanPrevLeft" src="">
-                <img class="scan-preview" id="scanPrevRight" src="">
-                <div class="laser-line"></div>
+            <div class="soundwave-container">
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
+                <div class="soundwave-bar"></div>
             </div>
 
-            <div style="color: var(--accent-primary); font-weight: 600; margin-bottom: 20px; font-size: 1rem;" id="loadingStatusText">
+            <div style="color: var(--accent-primary); font-weight: 700; margin-bottom: 12px; font-size: 1.05rem; letter-spacing: 0.5px; font-family: 'Outfit';" id="loadingStatusText">
                 Contacting ProfilerAgent & StylistAgent...
             </div>
-
-            <!-- Agent Logs Console -->
-            <div class="console-box" id="consoleLogs">
-                <!-- Log entries added dynamically -->
+            
+            <div style="color: var(--text-main); font-size: 0.85rem; font-style: italic; max-width: 450px; margin: 0 auto; line-height: 1.5;" id="loadingQuoteText">
+                "Invest in your hair, it is the crown you never take off."
             </div>
         </div>
     </div>
 
     <script>
         // Global State
-        let activeSlot = 'front';
         let capturedPhotos = {
-            front: null,
-            left: null,
-            right: null
+            front: null
         };
         let webcamStream = null;
         let activeConsultationId = null;
         let activeHistoryItem = null;
+        
+        // Client details state
+        let activeClientId = null;
+        let clientName = "";
+        let clientPhone = "";
 
-        // Alignment guide templates
+        // Alignment guide templates (only Front profile needed)
         const guides = {
-            front: `<svg viewBox="0 0 100 100" id="svgFront"><path d="M50,15 C32,15 32,35 32,50 C32,65 38,78 50,78 C62,78 68,65 68,50 C68,35 68,15 50,15 Z" /><path d="M50,78 C40,82 35,90 35,95 L65,95 C65,90 60,82 50,78 Z" /></svg>`,
-            left: `<svg viewBox="0 0 100 100" id="svgLeft"><path d="M30,30 C35,25 45,22 55,22 C65,22 75,32 75,50 C75,65 62,75 50,75 C45,75 42,72 38,75 L28,78 L32,68 C28,60 28,45 30,30 Z" /><path d="M50,75 L50,95 L65,95" /></svg>`,
-            right: `<svg viewBox="0 0 100 100" id="svgRight"><path d="M70,30 C65,25 55,22 45,22 C35,22 25,32 25,50 C25,65 38,75 50,75 C55,75 58,72 62,75 L72,78 L68,68 C72,60 72,45 70,30 Z" /><path d="M50,75 L50,95 L35,95" /></svg>`
+            front: `<svg viewBox="0 0 100 100" id="svgFront"><path d="M50,15 C32,15 32,35 32,50 C32,65 38,78 50,78 C62,78 68,65 68,50 C68,35 68,15 50,15 Z" /><path d="M50,78 C40,82 35,90 35,95 L65,95 C65,90 60,82 50,78 Z" /></svg>`
         };
 
         // Initialize elements
@@ -1168,13 +1286,64 @@
         const videoSource = document.getElementById('videoSource');
         const silhouetteGuide = document.getElementById('silhouetteGuide');
         const analyzeBtn = document.getElementById('analyzeBtn');
-        const heightInput = document.getElementById('height');
+
+        // Theme Configurations
+        const themes = {
+            midnight: {
+                '--bg-primary': '#07090e',
+                '--bg-secondary': '#0e121b',
+                '--accent-primary': '#deb876',
+                '--accent-secondary': '#f2dec2',
+                '--text-main': '#abb2bf',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(14, 18, 27, 0.65)',
+                '--glass-border': 'rgba(222, 184, 118, 0.15)'
+            },
+            rose: {
+                '--bg-primary': '#0c060b',
+                '--bg-secondary': '#1c0f1b',
+                '--accent-primary': '#f090b0',
+                '--accent-secondary': '#f8c4d4',
+                '--text-main': '#cbb9c6',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(28, 15, 27, 0.65)',
+                '--glass-border': 'rgba(240, 144, 176, 0.15)'
+            },
+            amber: {
+                '--bg-primary': '#0b0806',
+                '--bg-secondary': '#1b120e',
+                '--accent-primary': '#e5a04c',
+                '--accent-secondary': '#f0c995',
+                '--text-main': '#cbbbb2',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(27, 18, 14, 0.65)',
+                '--glass-border': 'rgba(229, 160, 76, 0.15)'
+            },
+            jade: {
+                '--bg-primary': '#050a07',
+                '--bg-secondary': '#0f1c14',
+                '--accent-primary': '#5cd699',
+                '--accent-secondary': '#99ebc2',
+                '--text-main': '#abc2b5',
+                '--text-bright': '#ffffff',
+                '--glass-bg': 'rgba(15, 28, 20, 0.65)',
+                '--glass-border': 'rgba(92, 214, 153, 0.15)'
+            }
+        };
+
+        function applyTheme(themeKey) {
+            const theme = themes[themeKey];
+            if (!theme) return;
+            for (const [prop, val] of Object.entries(theme)) {
+                document.documentElement.style.setProperty(prop, val);
+            }
+        }
         
         // On load
         window.addEventListener('load', async () => {
             await setupDevices();
-            await startWebcam();
-            await loadHistory();
+            // Show check-in landing screen immediately
+            document.getElementById('checkInOverlay').classList.add('show');
         });
 
         // Setup cameras
@@ -1212,114 +1381,241 @@
             }
         }
 
-        // Slot selection
-        function selectSlot(slot) {
-            activeSlot = slot;
+        // Client Check-In handler
+        async function submitCheckIn() {
+            const first = document.getElementById('checkin_firstName').value.trim();
+            const last = document.getElementById('checkin_lastName').value.trim();
+            const phone = document.getElementById('checkin_phone').value.trim();
             
-            // Toggle active classes
-            document.querySelectorAll('.slot-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`slot_${slot}`).classList.add('active');
+            if (!first || !last || !phone) {
+                alert("Please fill in First Name, Last Name, and Phone number to check-in.");
+                return;
+            }
             
-            // Set guide silhouette
-            silhouetteGuide.innerHTML = guides[slot];
-            
-            // Apply scale mirror only for front view (optional)
-            if (slot === 'front') {
-                webcam.style.transform = 'scaleX(-1)';
-            } else {
-                webcam.style.transform = 'none';
+            try {
+                const response = await fetch('http://localhost:8000/check-in', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        first_name: first,
+                        last_name: last,
+                        phone: phone
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned status ${response.status}`);
+                }
+                
+                const data = await response.json();
+                activeClientId = data.client_id;
+                clientName = `${data.first_name} ${data.last_name}`;
+                clientPhone = data.phone;
+                
+                // Hide check-in landing screen
+                document.getElementById('checkInOverlay').classList.remove('show');
+                
+                // Initialize and start camera feed
+                await startWebcam();
+                
+                // Update UI titles/labels
+                document.getElementById('headerClientLabel').textContent = `Client: ${clientName}`;
+                document.getElementById('clientDisplayInfo').textContent = `${clientName} (${clientPhone})`;
+                
+                // Load history sidebar for this customer
+                renderHistoryList(data.history);
+                
+                showToastNotification(`Successfully checked in: ${clientName}`);
+                
+            } catch (err) {
+                console.error("Check-in request failed", err);
+                alert("Client check-in failed: " + err.message);
             }
         }
 
-        // Capture photo from canvas
+        // Change client check-in session
+        function changeClient() {
+            // Terminate current camera stream
+            stopWebcam();
+            
+            // Reset check-in form input fields
+            document.getElementById('checkin_firstName').value = '';
+            document.getElementById('checkin_lastName').value = '';
+            document.getElementById('checkin_phone').value = '';
+            
+            // Reset captured photo preview
+            capturedPhotos.front = null;
+            const previewImg = document.getElementById('capturedImageElement');
+            previewImg.style.display = 'none';
+            previewImg.src = '';
+            previewImg.classList.remove('developed');
+            document.getElementById('capturedPreviewContainer').style.display = 'flex';
+            document.getElementById('portraitTimestamp').textContent = "Awaiting capture...";
+            
+            // Reset camera capture button
+            const captureBtn = document.getElementById('captureBtn');
+            captureBtn.innerHTML = '<i class="fa-solid fa-camera" style="margin-right: 6px;"></i>Capture Photo';
+            document.getElementById('cameraDeactivatedPlaceholder').style.display = 'none';
+            document.getElementById('silhouetteGuide').style.display = 'block';
+            document.getElementById('webcam').style.display = 'block';
+            
+            checkFormValidity();
+            
+            // Show Check-in screen
+            document.getElementById('checkInOverlay').classList.add('show');
+        }
+
+        // Stop camera stream to respect user privacy
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            webcam.srcObject = null;
+        }
+
+        // Camera control button handler: handles Capture and Reactivate Camera states
+        async function handleCaptureClick() {
+            const isDeactivated = (webcamStream === null);
+            if (isDeactivated) {
+                // Reactivate camera
+                await startWebcam();
+                
+                // Reset UI states
+                document.getElementById('cameraDeactivatedPlaceholder').style.display = 'none';
+                document.getElementById('silhouetteGuide').style.display = 'block';
+                document.getElementById('webcam').style.display = 'block';
+                
+                const captureBtn = document.getElementById('captureBtn');
+                captureBtn.innerHTML = '<i class="fa-solid fa-camera" style="margin-right: 6px;"></i>Capture Photo';
+            } else {
+                // Capture image
+                capturePhoto();
+            }
+        }
+
+        // Capture photo from canvas and shut down camera
         function capturePhoto() {
             const canvas = document.createElement('canvas');
             canvas.width = webcam.videoWidth || 640;
             canvas.height = webcam.videoHeight || 480;
             const ctx = canvas.getContext('2d');
             
-            // Handle mirror flip for front
-            if (activeSlot === 'front') {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
-            
+            // Front camera mirror flip
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
             ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
             
             canvas.toBlob(blob => {
-                capturedPhotos[activeSlot] = blob;
+                capturedPhotos.front = blob;
                 
-                // Show preview thumbnail
+                // Show preview image
                 const imgUrl = URL.createObjectURL(blob);
-                document.getElementById(`prev_${activeSlot}`).src = imgUrl;
+                const previewImg = document.getElementById('capturedImageElement');
+                previewImg.src = imgUrl;
+                previewImg.style.display = 'block';
+                previewImg.classList.remove('developed');
+                // trigger layout reflow before adding class for transition
+                void previewImg.offsetWidth;
+                previewImg.classList.add('developed');
                 
-                // Mark slot as captured
-                const slotBtn = document.getElementById(`slot_${activeSlot}`);
-                slotBtn.classList.add('captured');
+                document.getElementById('capturedPreviewContainer').style.display = 'none';
                 
-                // Set status text
-                slotBtn.querySelector('.slot-status').textContent = 'CAPTURED';
+                // Update timestamp
+                const date = new Date();
+                document.getElementById('portraitTimestamp').textContent = `Captured at ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
                 
-                // Auto switch to next slot if empty
-                if (activeSlot === 'front' && !capturedPhotos.left) {
-                    selectSlot('left');
-                } else if (activeSlot === 'left' && !capturedPhotos.right) {
-                    selectSlot('right');
-                }
+                // Turn off camera stream immediately for privacy
+                stopWebcam();
+                
+                // Show camera deactivated placeholder
+                document.getElementById('silhouetteGuide').style.display = 'none';
+                document.getElementById('webcam').style.display = 'none';
+                document.getElementById('cameraDeactivatedPlaceholder').style.display = 'flex';
+                
+                // Toggle button to reactivate
+                const captureBtn = document.getElementById('captureBtn');
+                captureBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate" style="margin-right: 6px;"></i>Reactivate Camera';
                 
                 checkFormValidity();
             }, 'image/jpeg');
         }
 
-        // Validate and enable analysis
+        // Validate and enable analysis (removed height check)
         function checkFormValidity() {
             const hasFront = capturedPhotos.front !== null;
-            const hasHeight = heightInput.value.trim() !== '' && !isNaN(parseFloat(heightInput.value));
-            
-            if (hasFront && hasHeight) {
+            if (hasFront) {
                 analyzeBtn.disabled = false;
             } else {
                 analyzeBtn.disabled = true;
             }
         }
 
-        // Start logs in overlay console
-        function writeConsoleLog(text, type = '') {
-            const consoleLogs = document.getElementById('consoleLogs');
-            const line = document.createElement('div');
-            line.className = `console-line ${type}`;
-            line.innerHTML = `&gt; ${text}`;
-            consoleLogs.appendChild(line);
-            consoleLogs.scrollTop = consoleLogs.scrollHeight;
-        }
+        // Cycling Loading screen statuses and engaging quotes
+        const stylingQuotes = [
+            "“Invest in your hair, it is the crown you never take off.”",
+            "“Great hair doesn't happen by chance, it happens by appointment.”",
+            "“Hair style is the final tip-off whether or not a person really knows themselves.” – Hubert de Givenchy",
+            "“Beauty is when you can appreciate yourself. When you love yourself, that's when you're most beautiful.” – Zoe Kravitz",
+            "“Life is more beautiful when you meet the right hair stylist.”",
+            "“Your hair is the ball gown you never take off.”",
+            "“A woman who cuts her hair is about to change her life.” – Coco Chanel",
+            "“Hairdressing is not a job, it's a craft.”",
+            "“Invest in your style, express your soul.”"
+        ];
+
+        const loadingPhases = [
+            "Activating AI Profiler Agent: Calibrating facial viewpoints...",
+            "Profiler Agent: Scanning frontal shape outline... analyzing symmetry...",
+            "Profiler Agent: Determining skin tone depth and color undertones...",
+            "Profiler Agent: Evaluating hair density and natural texture...",
+            "Consulting with Stylist Agent: Matching cuts for facial geometry...",
+            "Stylist Agent: Curating signature styles and products list...",
+            "Vertex AI Imagen Plate: Painting styling visualization plates...",
+            "Vertex AI Veo Catwalk Model: Generating runway simulation video...",
+            "Stitching final recommendations report... finishing up..."
+        ];
+
+        let logsInterval = null;
+        let quotesInterval = null;
 
         function runAgentLogsSimulation() {
-            const consoleLogs = document.getElementById('consoleLogs');
-            consoleLogs.innerHTML = '';
+            let phaseIdx = 0;
+            document.getElementById('loadingStatusText').textContent = loadingPhases[0];
             
-            setTimeout(() => writeConsoleLog("Connecting with Google Antigravity SDK connection...", "agent"), 200);
-            setTimeout(() => writeConsoleLog("ProfilerAgent: Activating image profiling capabilities...", "agent"), 1500);
-            setTimeout(() => writeConsoleLog("ProfilerAgent: Front face detected. Loading left and right viewpoints...", "agent"), 3500);
-            setTimeout(() => writeConsoleLog("ProfilerAgent: Matching profile coordinates... Done.", "success"), 6000);
-            setTimeout(() => writeConsoleLog("StylistAgent: Loading facial shapes & textures metadata...", "agent"), 7500);
-            setTimeout(() => writeConsoleLog("StylistAgent: Generating customized recommendations...", "agent"), 10500);
-            setTimeout(() => writeConsoleLog("VertexAI: Concurrently generating Imagen visualizations...", "agent"), 13500);
-            setTimeout(() => writeConsoleLog("VertexAI: Polling Veo try-on operation in region us-central1...", "agent"), 16500);
+            const randQuote = stylingQuotes[Math.floor(Math.random() * stylingQuotes.length)];
+            document.getElementById('loadingQuoteText').textContent = randQuote;
+            
+            logsInterval = setInterval(() => {
+                phaseIdx++;
+                if (phaseIdx < loadingPhases.length) {
+                    document.getElementById('loadingStatusText').textContent = loadingPhases[phaseIdx];
+                } else {
+                    clearInterval(logsInterval);
+                }
+            }, 2500);
+
+            quotesInterval = setInterval(() => {
+                const randQuote = stylingQuotes[Math.floor(Math.random() * stylingQuotes.length)];
+                const quoteEl = document.getElementById('loadingQuoteText');
+                quoteEl.style.opacity = 0;
+                setTimeout(() => {
+                    quoteEl.textContent = randQuote;
+                    quoteEl.style.opacity = 1;
+                }, 300);
+            }, 4500);
         }
 
         // Submit multi-agent analysis request
         async function submitAnalysis() {
-            if (!capturedPhotos.front || !heightInput.value) return;
+            if (!capturedPhotos.front || !activeClientId) return;
 
             const overlay = document.getElementById('loadingOverlay');
-            overlay.style.display = 'flex';
+            overlay.classList.add('show');
             
-            // Set scanning previews
-            document.getElementById('scanPrevFront').src = document.getElementById('prev_front').src;
-            document.getElementById('scanPrevLeft').src = document.getElementById('prev_left').src;
-            document.getElementById('scanPrevRight').src = document.getElementById('prev_right').src;
+            // Set scanning preview
+            const previewImg = document.getElementById('capturedImageElement');
+            document.getElementById('scanPrevFront').src = previewImg.src;
             
             document.getElementById('loadingTitle').textContent = "Running Multi-Agent Synthesis";
             document.getElementById('loadingStatusText').textContent = "Contacting ProfilerAgent & StylistAgent...";
@@ -1328,11 +1624,7 @@
             try {
                 const formData = new FormData();
                 formData.append('file_front', capturedPhotos.front, 'front.jpg');
-                if (capturedPhotos.left) formData.append('file_left', capturedPhotos.left, 'left.jpg');
-                if (capturedPhotos.right) formData.append('file_right', capturedPhotos.right, 'right.jpg');
-                
-                formData.append('height', heightInput.value);
-                formData.append('client_id', document.getElementById('clientSelect').value);
+                formData.append('client_id', activeClientId);
 
                 const response = await fetch('http://localhost:8000/analyze', {
                     method: 'POST',
@@ -1344,16 +1636,19 @@
                 }
 
                 const data = await response.json();
-                writeConsoleLog("System: stitching final recommendations response.", "success");
+                clearInterval(logsInterval);
+                clearInterval(quotesInterval);
                 
                 setTimeout(async () => {
-                    overlay.style.display = 'none';
+                    overlay.classList.remove('show');
                     displayRecommendations(data);
                     await loadHistory();
                 }, 2000);
 
             } catch (err) {
-                overlay.style.display = 'none';
+                clearInterval(logsInterval);
+                clearInterval(quotesInterval);
+                overlay.classList.remove('show');
                 console.error(err);
                 alert("Consultation analysis failed: " + err.message);
             }
@@ -1364,17 +1659,11 @@
             if (!activeConsultationId || !feedbackText.trim()) return;
 
             const overlay = document.getElementById('loadingOverlay');
-            overlay.style.display = 'flex';
+            overlay.classList.add('show');
             
-            document.getElementById('loadingTitle').textContent = "Refining Styling Recommendations";
+            document.getElementById('loadingTitle').textContent = "Refining Recommendations";
             document.getElementById('loadingStatusText').textContent = "StylistAgent: updating matching cuts based on feedback...";
-            
-            const consoleLogs = document.getElementById('consoleLogs');
-            consoleLogs.innerHTML = '';
-            writeConsoleLog("System: Initiating refinement connection with StylistAgent...", "agent");
-            setTimeout(() => writeConsoleLog(`StylistAgent: processing refinement command: "${feedbackText}"`, "agent"), 800);
-            setTimeout(() => writeConsoleLog("StylistAgent: updating suitability scoring indexes...", "agent"), 2500);
-            setTimeout(() => writeConsoleLog("VertexAI: Concurrently regenerating visual assets...", "agent"), 4500);
+            runAgentLogsSimulation();
 
             try {
                 const response = await fetch('http://localhost:8000/refine', {
@@ -1391,17 +1680,97 @@
                 }
 
                 const data = await response.json();
-                writeConsoleLog("System: stitching new generated layout.", "success");
+                clearInterval(logsInterval);
+                clearInterval(quotesInterval);
                 
                 setTimeout(() => {
-                    overlay.style.display = 'none';
+                    overlay.classList.remove('show');
                     displayRecommendations(data);
                 }, 2000);
 
             } catch (err) {
-                overlay.style.display = 'none';
+                clearInterval(logsInterval);
+                clearInterval(quotesInterval);
+                overlay.classList.remove('show');
                 console.error(err);
                 alert("Refinement failed: " + err.message);
+            }
+        }
+
+        // Log selection confirmation
+        async function confirmStyleSelection(styleName, idx) {
+            if (!activeClientId || !activeConsultationId) return;
+            try {
+                const response = await fetch('http://localhost:8000/confirm-style', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: activeClientId,
+                        consultation_id: activeConsultationId,
+                        style_name: styleName
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned status ${response.status}`);
+                }
+
+                const resData = await response.json();
+                if (resData.success) {
+                    const confirmBox = document.getElementById(`confirm_box_${idx}`);
+                    confirmBox.innerHTML = `
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="background: rgba(86, 219, 149, 0.1); border: 1px solid #56db95; border-radius: 12px; padding: 12px; text-align: center; color: #56db95; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Style Choice Confirmed!</span>
+                            </div>
+                            <button class="btn" style="width:100%; border-radius:12px;" onclick="checkoutAppointment('${styleName.replace(/'/g, "\\'")}')">
+                                <i class="fa-solid fa-credit-card"></i> Complete Session & Checkout
+                            </button>
+                        </div>
+                    `;
+                    // Reload history to display verified checkmarks
+                    await loadHistory();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to confirm style selection: " + err.message);
+            }
+        }
+
+        // Complete Consultation Checkout & Book Appointment
+        async function checkoutAppointment(styleName) {
+            if (!activeClientId || !activeConsultationId) return;
+            
+            const amtStr = prompt("Enter total service checkout amount (INR):", "1200.00");
+            if (amtStr === null) return; // user cancelled
+            const amount = parseFloat(amtStr) || 1200.00;
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/crm/appointments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: activeClientId,
+                        appointment_date: new Date().toISOString(),
+                        consultation_id: activeConsultationId,
+                        total_amount: amount
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to checkout appointment");
+                }
+                
+                const data = await response.json();
+                showToastNotification(`Checkout complete! Earned ${data.loyalty_points_earned} loyalty points.`);
+                
+                // Return to start screen and reload history list
+                await loadHistory();
+                startNewSession();
+            } catch (err) {
+                console.error("Checkout failed", err);
+                alert("Failed to checkout appointment: " + err.message);
             }
         }
 
@@ -1410,6 +1779,7 @@
             activeConsultationId = data.consultation_id;
             
             // Hide camera, show results
+            stopWebcam();
             document.getElementById('capturePanel').style.display = 'none';
             const resultsSection = document.getElementById('resultsSection');
             resultsSection.style.display = 'flex';
@@ -1431,7 +1801,7 @@
                 card.className = 'recommendation-card';
 
                 // Media layout
-                let imageHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#8892b0; font-style:italic;">No Image</div>`;
+                let imageHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-main); font-style:italic;">No Image</div>`;
                 if (rec.visualization_url) {
                     imageHTML = `<img src="${rec.visualization_url}" alt="${rec.style_name}">`;
                 }
@@ -1440,8 +1810,8 @@
                 if (rec.video_url) {
                     videoHTML = `
                     <div class="rec-video-holder">
-                        <h4 style="font-size:0.8rem; font-weight:700; color:var(--accent-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                            🎬 Runway Simulation try-on
+                        <h4 style="font-size:0.75rem; font-weight:700; color:var(--accent-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px; text-transform: uppercase;">
+                            <i class="fa-solid fa-clapperboard"></i> Runway Simulation try-on
                         </h4>
                         <video src="${rec.video_url}" controls autoplay loop muted playsinline></video>
                     </div>
@@ -1483,7 +1853,23 @@
                         <div class="rec-list-section">
                             <h4>Styling Products Needed:</h4>
                             <ul>
-                                ${rec.products_needed.map(p => `<li>${p}</li>`).join('')}
+                                ${rec.products_needed.map((p, pIdx) => {
+                                    const status = rec.products_status && rec.products_status[pIdx];
+                                    let badgeHTML = '';
+                                    if (status) {
+                                        if (status.in_stock) {
+                                            badgeHTML = `<span style="font-size: 0.65rem; background: rgba(86, 219, 149, 0.1); color: #56db95; padding: 2px 6px; border-radius: 4px; font-weight: 700; border: 1px solid rgba(86, 219, 149, 0.2); margin-left: 8px;">In Stock</span>`;
+                                        } else if (status.substitute_found) {
+                                            badgeHTML = `<span style="font-size: 0.65rem; background: rgba(232, 169, 88, 0.12); color: #e8a958; padding: 2px 6px; border-radius: 4px; font-weight: 700; border: 1px solid rgba(232, 169, 88, 0.2); margin-left: 8px;" title="Substituted with ${status.substitute_name}">Out of Stock - Substituted</span>`;
+                                        } else {
+                                            badgeHTML = `<span style="font-size: 0.65rem; background: rgba(255, 74, 74, 0.1); color: #ff8080; padding: 2px 6px; border-radius: 4px; font-weight: 700; border: 1px solid rgba(255, 74, 74, 0.2); margin-left: 8px;">Out of Stock</span>`;
+                                        }
+                                    }
+                                    return `<li style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                                        <span>${p}</span>
+                                        ${badgeHTML}
+                                    </li>`;
+                                }).join('')}
                             </ul>
                         </div>
 
@@ -1491,7 +1877,24 @@
                         <div class="refinement-box">
                             <h4>Adjust style options (Regenerate suggestion)</h4>
                             <textarea id="refine_input_${idx}" placeholder="e.g. Make the top thinner, add layers, change styling..."></textarea>
-                            <button class="btn" style="width:100%; border-radius:8px;" onclick="applyCardRefine(${idx})">Refine suggestion</button>
+                            <button class="btn" style="width:100%; border-radius:12px;" onclick="applyCardRefine(${idx})">Refine Suggestion</button>
+                        </div>
+                        
+                        <!-- Confirmation Selection Flow -->
+                        <div id="confirm_box_${idx}" style="margin-top: 20px;">
+                            ${(data.confirmed_style === rec.style_name) ? `
+                                <div style="display:flex; flex-direction:column; gap:8px;">
+                                    <div style="background: rgba(86, 219, 149, 0.1); border: 1px solid #56db95; border-radius: 12px; padding: 12px; text-align: center; color: #56db95; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                        <span>Style Choice Confirmed!</span>
+                                    </div>
+                                    <button class="btn" style="width:100%; border-radius:12px;" onclick="checkoutAppointment('${rec.style_name.replace(/'/g, "\\'")}')">
+                                        <i class="fa-solid fa-credit-card"></i> Complete Session & Checkout
+                                    </button>
+                                </div>
+                            ` : `
+                                <button class="btn btn-secondary" style="width:100%; border-radius:12px;" onclick="confirmStyleSelection('${rec.style_name.replace(/'/g, "\\'")}', ${idx})">Confirm Style Selection</button>
+                            `}
                         </div>
                     </div>
                 `;
@@ -1571,6 +1974,7 @@
             }
         }
 
+        // Slide Carousel
         function slideCarousel(direction) {
             const track = document.getElementById('recommendationsGrid');
             const card = track.querySelector('.recommendation-card');
@@ -1585,21 +1989,29 @@
             }
         }
 
-        // Clear everything for a new session
-        function startNewSession() {
+        // Clear everything for a new session (retains active client)
+        async function startNewSession() {
             activeConsultationId = null;
-            capturedPhotos = { front: null, left: null, right: null };
+            capturedPhotos = { front: null };
             
-            // Reset slots in UI
-            document.querySelectorAll('.slot-btn').forEach(btn => {
-                btn.classList.remove('captured');
-                btn.querySelector('.slot-status').textContent = 'PENDING';
-            });
-            document.getElementById('prev_front').src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>";
-            document.getElementById('prev_left').src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>";
-            document.getElementById('prev_right').src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>";
+            // Stop camera if running, then start fresh stream
+            stopWebcam();
+            await startWebcam();
             
-            selectSlot('front');
+            // Reset captured photo preview UI
+            const previewImg = document.getElementById('capturedImageElement');
+            previewImg.style.display = 'none';
+            previewImg.src = '';
+            previewImg.classList.remove('developed');
+            document.getElementById('capturedPreviewContainer').style.display = 'flex';
+            document.getElementById('portraitTimestamp').textContent = "Awaiting capture...";
+            
+            // Reset camera capture button
+            const captureBtn = document.getElementById('captureBtn');
+            captureBtn.innerHTML = '<i class="fa-solid fa-camera" style="margin-right: 6px;"></i>Capture Photo';
+            document.getElementById('cameraDeactivatedPlaceholder').style.display = 'none';
+            document.getElementById('silhouetteGuide').style.display = 'block';
+            document.getElementById('webcam').style.display = 'block';
             
             // Show camera panel
             document.getElementById('capturePanel').style.display = 'block';
@@ -1607,7 +2019,7 @@
 
             // Reset header button
             const analyzeBtn = document.getElementById('analyzeBtn');
-            analyzeBtn.innerHTML = '<span>Analyze Profiling Feed</span>';
+            analyzeBtn.innerHTML = '<span>Analyze Portrait</span>';
             analyzeBtn.disabled = true;
             analyzeBtn.onclick = submitAnalysis;
             document.getElementById('headerSubtitle').textContent = "iPad & Tablet Professional Style Consultant";
@@ -1618,50 +2030,59 @@
             }
         }
 
-        // Fetch past consultations from DB
+        // Fetch past consultations from DB (filtered by client)
         async function loadHistory() {
+            if (!activeClientId) return;
             try {
-                const response = await fetch('http://localhost:8000/history');
+                const response = await fetch(`http://localhost:8000/history?client_id=${activeClientId}`);
                 const data = await response.json();
-                
-                const list = document.getElementById('historyList');
-                list.innerHTML = '';
-                
-                if (!data.history || data.history.length === 0) {
-                    list.innerHTML = `<div style="text-align: center; color: #8892b0; padding-top: 40px; font-size: 0.95rem;">No past sessions found</div>`;
-                    return;
-                }
-
-                data.history.forEach(item => {
-                    const row = document.createElement('div');
-                    row.className = `history-item ${activeConsultationId === item.id ? 'active' : ''}`;
-                    if (activeConsultationId === item.id) activeHistoryItem = row;
-                    
-                    row.onclick = () => loadPastConsultation(item.id, row);
-
-                    // Load front thumbnail if available
-                    let thumbUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>";
-                    if (item.photos && item.photos.front) {
-                        // Point to backend static endpoint (FastAPI mounts local directories)
-                        thumbUrl = `http://localhost:8000/${item.photos.front}`;
-                    }
-
-                    const dateObj = new Date(item.created_at);
-                    const formattedDate = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-                    row.innerHTML = `
-                        <img class="history-thumb" src="${thumbUrl}">
-                        <div class="history-info">
-                            <div class="history-name">${item.first_name} ${item.last_name} (#${item.id})</div>
-                            <div class="history-date">${formattedDate}</div>
-                        </div>
-                    `;
-                    list.appendChild(row);
-                });
-
+                renderHistoryList(data.history);
             } catch (err) {
                 console.error("Failed to load consultations history list", err);
             }
+        }
+
+        // Render client consultations list
+        function renderHistoryList(history) {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            
+            if (!history || history.length === 0) {
+                list.innerHTML = `<div style="text-align: center; color: var(--text-main); padding-top: 40px; font-size: 0.85rem;">No past sessions found</div>`;
+                return;
+            }
+
+            history.forEach(item => {
+                const row = document.createElement('div');
+                row.className = `history-item ${activeConsultationId === item.id ? 'active' : ''}`;
+                if (activeConsultationId === item.id) activeHistoryItem = row;
+                
+                row.onclick = () => loadPastConsultation(item.id, row);
+
+                // Load front thumbnail if available
+                let thumbUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='45' viewBox='0 0 60 45'><rect width='60' height='45' fill='%23121820'/></svg>";
+                if (item.photos && item.photos.front) {
+                    thumbUrl = `http://localhost:8000/${item.photos.front}`;
+                }
+
+                const dateObj = new Date(item.created_at);
+                const formattedDate = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                let selectionHTML = '';
+                if (item.confirmed_style) {
+                    selectionHTML = `<div style="font-size: 0.75rem; color: #56db95; margin-top: 4px; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> ${item.confirmed_style}</div>`;
+                }
+
+                row.innerHTML = `
+                    <img class="history-thumb" src="${thumbUrl}">
+                    <div class="history-info">
+                        <div class="history-name">${item.first_name} ${item.last_name} (#${item.id})</div>
+                        <div class="history-date">${formattedDate}</div>
+                        ${selectionHTML}
+                    </div>
+                `;
+                list.appendChild(row);
+            });
         }
 
         // Load specific historical consultation
@@ -1672,18 +2093,17 @@
             element.classList.add('active');
             activeHistoryItem = element;
 
-            fetch(`http://localhost:8000/history`)
+            fetch(`http://localhost:8000/history?client_id=${activeClientId}`)
                 .then(res => res.json())
                 .then(data => {
                     const match = data.history.find(h => h.id === id);
                     if (match) {
-                        // Construct response format suitable for display
                         const mockResponse = {
                             consultation_id: match.id,
+                            confirmed_style: match.confirmed_style,
                             recommendations: match.recommendations.recommendations.map(r => {
-                                // Update relative urls to direct local urls if local files
                                 if (r.visualization_url && r.visualization_url.startsWith('data')) {
-                                    // standard base64 URL, keep as is
+                                    // standard base64 URL
                                 } else if (r.visualization_url) {
                                     r.visualization_url = `http://localhost:8000/${r.visualization_url}`;
                                 }
@@ -1699,6 +2119,53 @@
                     alert("Could not load past session: " + err.message);
                 });
         }
+
+        // ============================================================================
+        // TOAST NOTIFICATIONS UTILITY
+        // ============================================================================
+
+        function showToastNotification(message) {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '24px';
+            toast.style.right = '24px';
+            toast.style.background = 'var(--bg-secondary)';
+            toast.style.border = '1px solid var(--accent-primary)';
+            toast.style.borderRadius = '12px';
+            toast.style.padding = '12px 20px';
+            toast.style.zIndex = '9999';
+            toast.style.color = 'var(--text-bright)';
+            toast.style.fontSize = '0.85rem';
+            toast.style.fontWeight = '700';
+            toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.5)';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '10px';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            
+            toast.innerHTML = `
+                <span style="color:var(--accent-primary);">✨</span>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
     </script>
 </body>
 </html>

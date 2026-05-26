@@ -5,7 +5,7 @@ from google.antigravity import Agent, LocalAgentConfig
 from app.config import settings
 from app.agents.schemas import ClientProfileAnalysis, RecommendationListModel
 
-async def run_stylist_agent(profile: ClientProfileAnalysis, feedback: Optional[str] = None, height: Optional[float] = None) -> RecommendationListModel:
+async def run_stylist_agent(profile: ClientProfileAnalysis, feedback: Optional[str] = None) -> RecommendationListModel:
     """
     StylistAgent: Generates 3 custom hairstyle suggestions based on the attributes and optional hairdresser feedback.
     """
@@ -14,7 +14,6 @@ async def run_stylist_agent(profile: ClientProfileAnalysis, feedback: Optional[s
         if os.path.exists(key_path):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path
 
-    height_desc = f"{height} cm" if height else "Not specified"
     client_context = (
         f"Client Attributes:\n"
         f"- Gender: {profile.gender}\n"
@@ -23,7 +22,6 @@ async def run_stylist_agent(profile: ClientProfileAnalysis, feedback: Optional[s
         f"- Current Hair Length: {profile.hair_length}\n"
         f"- Skin Tone: {profile.skin_tone} ({profile.undertone} undertone)\n"
         f"- Ethnicity: {profile.ethnicity}\n"
-        f"- Height: {height_desc}\n"
         f"- Key Profiler Observations: {profile.notes}\n"
     )
 

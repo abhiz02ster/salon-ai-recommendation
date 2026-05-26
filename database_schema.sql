@@ -115,9 +115,9 @@ CREATE TABLE IF NOT EXISTS staff_services (
     staff_id INTEGER NOT NULL,
     service_id INTEGER NOT NULL,
     proficiency_level VARCHAR(20),  -- beginner, intermediate, expert
-    PRIMARY KEY (staff_id, service_id),
     FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE CASCADE,
-    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
+    UNIQUE (staff_id, service_id)
 );
 
 -- ============================================================================
@@ -154,6 +154,43 @@ CREATE TABLE IF NOT EXISTS appointment_service_variations (
     FOREIGN KEY (service_variation_id) REFERENCES service_variations(id) ON DELETE CASCADE
 );
 
+-- Stylist notes table (chronological stylist logs per appointment/consultation)
+CREATE TABLE IF NOT EXISTS stylist_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    appointment_id INTEGER NOT NULL,
+    stylist_id INTEGER NOT NULL,
+    note_type VARCHAR(20) DEFAULT 'general', -- formula, general_preference, complaint
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE,
+    FOREIGN KEY (stylist_id) REFERENCES staff(id) ON DELETE CASCADE
+);
+
+-- Loyalty points history tracking
+CREATE TABLE IF NOT EXISTS loyalty_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    points_delta INTEGER NOT NULL, -- positive for earn, negative for redeem
+    reason VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
+-- Client profiles table (advanced CRM characteristics)
+CREATE TABLE IF NOT EXISTS client_profiles (
+    client_id INTEGER PRIMARY KEY,
+    hair_density VARCHAR(20),
+    hair_porosity VARCHAR(20),
+    hair_elasticity VARCHAR(20),
+    natural_color VARCHAR(30),
+    scalp_type VARCHAR(30),
+    chemical_treatment_history TEXT,
+    allergies TEXT,
+    typical_maintenance VARCHAR(20),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+
 -- ============================================================================
 -- TRANSACTIONS AND PAYMENTS TABLES
 -- ============================================================================
@@ -178,29 +215,8 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 -- ============================================================================
--- INVENTORY MANAGEMENT TABLES (Extended from existing inv_mgmt)
+-- INVENTORY MANAGEMENT TABLES
 -- ============================================================================
-
--- Products table - extending existing inventory management for salon-specific needs
--- Note: This builds upon the existing products table from inv_mgmt
--- We'll add salon-specific columns while keeping compatibility
-
-ALTER TABLE products ADD COLUMN IF NOT EXISTS salon_category VARCHAR(50);  -- hair_care, styling, color, nails, disposables
-ALTER TABLE products ADD COLUMN IF NOT EXISTS brand VARCHAR(100);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS size_volume VARCHAR(50);    -- e.g., "250ml", "100ml"
-ALTER TABLE products ADD COLUMN IF NOT EXISTS is_professional_use BOOLEAN DEFAULT 0;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS minimum_stock_level INTEGER DEFAULT 5;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_quantity INTEGER DEFAULT 10;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id INTEGER;        -- Reference to suppliers table
-
--- Materials table - extending existing materials for salon-specific needs
-ALTER TABLE materials ADD COLUMN IF NOT EXISTS salon_category VARCHAR(50); -- hair_color, developer, treatment, etc.
-ALTER TABLE materials ADD COLUMN IF NOT EXISTS brand VARCHAR(100);
-ALTER TABLE materials ADD COLUMN IF NOT EXISTS size_volume VARCHAR(50);
-ALTER TABLE materials ADD COLUMN IF NOT EXISTS is_professional_use BOOLEAN DEFAULT 0;
-ALTER TABLE materials ADD COLUMN IF NOT EXISTS minimum_stock_level DECIMAL(10,2) DEFAULT 1.0;
-ALTER TABLE materials ADD COLUMN IF NOT EXISTS reorder_quantity DECIMAL(10,2) DEFAULT 5.0;
-ALTER TABLE materials ADD COLUMN IF NOT EXISTS supplier_id INTEGER;
 
 -- Suppliers table
 CREATE TABLE IF NOT EXISTS suppliers (
@@ -221,6 +237,51 @@ CREATE TABLE IF NOT EXISTS suppliers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Products table - extending existing inventory management for salon-specific needs
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    category VARCHAR(50),           -- general category
+    cost_price DECIMAL(10, 2) NOT NULL,
+    selling_price DECIMAL(10, 2),   -- retail price
+    stock INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN DEFAULT 1,
+    salon_category VARCHAR(50),     -- hair_care, styling, color, nails, disposables
+    brand VARCHAR(100),
+    size_volume VARCHAR(50),        -- e.g. "250ml"
+    is_professional_use BOOLEAN DEFAULT 0,
+    minimum_stock_level INTEGER DEFAULT 5,
+    reorder_quantity INTEGER DEFAULT 10,
+    supplier_id INTEGER,            -- Reference to suppliers table
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+);
+
+-- Materials table - raw inputs (e.g. dye tube grams, bleach volume)
+CREATE TABLE IF NOT EXISTS materials (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    category VARCHAR(50),
+    quantity DECIMAL(10,3) NOT NULL DEFAULT 0.0,
+    unit VARCHAR(20),               -- g, ml, etc.
+    unit_cost DECIMAL(10,4) NOT NULL DEFAULT 0.0,
+    is_active BOOLEAN DEFAULT 1,
+    salon_category VARCHAR(50),     -- hair_color, developer, treatment
+    brand VARCHAR(100),
+    size_volume VARCHAR(50),
+    is_professional_use BOOLEAN DEFAULT 1,
+    minimum_stock_level DECIMAL(10,2) DEFAULT 1.0,
+    reorder_quantity DECIMAL(10,2) DEFAULT 5.0,
+    supplier_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+);
+
 -- Service inventory usage tracking - links products/materials used in services
 CREATE TABLE IF NOT EXISTS service_inventory_usage (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -236,6 +297,33 @@ CREATE TABLE IF NOT EXISTS service_inventory_usage (
     FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE SET NULL,
     CHECK ((product_id IS NOT NULL AND material_id IS NULL) OR
            (product_id IS NULL AND material_id IS NOT NULL))
+);
+
+-- Stock transactions table (logs additions/deductions)
+CREATE TABLE IF NOT EXISTS stock_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER,             -- NULL if material
+    material_id INTEGER,            -- NULL if product
+    transaction_type VARCHAR(20) NOT NULL, -- receive, sale, usage, adjustment
+    quantity REAL NOT NULL,         -- negative for deductions
+    reference_id INTEGER,           -- appointment_id, purchase_order_id, etc.
+    performed_by VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+    FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE SET NULL,
+    CHECK ((product_id IS NOT NULL AND material_id IS NULL) OR
+           (product_id IS NULL AND material_id IS NOT NULL))
+);
+
+-- Product recommendations association (maps recommended products to consultations)
+CREATE TABLE IF NOT EXISTS product_recommendations_association (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    consultation_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    status VARCHAR(20) DEFAULT 'recommended', -- recommended, substituted, purchased
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (consultation_id) REFERENCES client_consultations(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
 -- ============================================================================
@@ -373,13 +461,11 @@ WHEN NEW.status = 'completed' AND OLD.status != 'completed'
 BEGIN
     UPDATE clients SET
         total_visits = total_visits + 1,
-        total_spent = total_spent +
-            (SELECT COALESCE(SUM(amount), 0) FROM transactions
-             WHERE appointment_id = NEW.id AND status = 'completed'),
         last_visit_date = DATE(NEW.appointment_datetime),
         updated_at = CURRENT_TIMESTAMP
     WHERE id = NEW.client_id;
 END;
+
 
 -- Trigger to update staff assignment count (optional)
 -- Trigger to update client stats after transaction
