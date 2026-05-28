@@ -9,6 +9,7 @@ class Settings:
     USE_VERTEX_AI: bool = os.getenv("USE_VERTEX_AI", "true").lower() == "true"
     VERTEX_AI_PROJECT: str = os.getenv("VERTEX_AI_PROJECT")
     VERTEX_AI_LOCATION: str = os.getenv("VERTEX_AI_LOCATION", "us-central1")
+    MOCK_MEDIA: bool = os.getenv("MOCK_MEDIA", "true").lower() == "true"
     
     # Path configurations (resolved relative to this file's position)
     APP_DIR = os.path.dirname(os.path.abspath(__file__))               # backend/app/

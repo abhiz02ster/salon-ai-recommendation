@@ -10,6 +10,61 @@ from app.config import settings
 vertex_client = None
 vertex_ai_available = False
 
+# A mapping of hairstyle keywords to high-quality Unsplash styling photos
+MOCK_HAIRSTYLES = {
+    "short": [
+        "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=600&auto=format&fit=crop", # male short
+        "https://images.unsplash.com/photo-1605497746444-ac9dbd50d9f8?q=80&w=600&auto=format&fit=crop", # male cropped
+        "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?q=80&w=600&auto=format&fit=crop"  # female short pixie
+    ],
+    "bob": [
+        "https://images.unsplash.com/photo-1595959183075-c1d09e77bbd9?q=80&w=600&auto=format&fit=crop", # blonde bob
+        "https://images.unsplash.com/photo-1617391654484-279268307e59?q=80&w=600&auto=format&fit=crop", # classic dark bob
+        "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?q=80&w=600&auto=format&fit=crop"  # stylized wavy bob
+    ],
+    "long": [
+        "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=600&auto=format&fit=crop", # long brown waves
+        "https://images.unsplash.com/photo-1601412436009-d964bd02edbc?q=80&w=600&auto=format&fit=crop", # long flowing hair
+        "https://images.unsplash.com/photo-1595959183075-c1d09e77bbd9?q=80&w=600&auto=format&fit=crop"
+    ],
+    "quiff": [
+        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop", # quiff men
+        "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&auto=format&fit=crop", # classic slick back
+        "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=600&auto=format&fit=crop"  # stylish textured pompadour
+    ],
+    "default": [
+        "https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1595959183075-c1d09e77bbd9?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop"
+    ]
+}
+
+MOCK_VIDEOS = [
+    "https://assets.mixkit.co/videos/preview/mixkit-woman-with-beautiful-hair-40176-large.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-her-haircut-39934-large.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-hairdresser-brushing-hair-of-a-client-34351-large.mp4"
+]
+
+def get_mock_image(style_name: str) -> str:
+    style = style_name.lower()
+    category = "default"
+    if any(k in style for k in ["fade", "buzz", "short", "crop", "pixie", "undercut"]):
+        category = "short"
+    elif any(k in style for k in ["bob", "fringe", "pageboy", "lob", "bangs"]):
+        category = "bob"
+    elif any(k in style for k in ["long", "wave", "curl", "flow", "layers", "braids"]):
+        category = "long"
+    elif any(k in style for k in ["quiff", "pompadour", "slick", "mohawk", "comb"]):
+        category = "quiff"
+        
+    options = MOCK_HAIRSTYLES[category]
+    idx = len(style_name) % len(options)
+    return options[idx]
+
+def get_mock_video(style_name: str) -> str:
+    idx = len(style_name) % len(MOCK_VIDEOS)
+    return MOCK_VIDEOS[idx]
+
 if settings.USE_VERTEX_AI and settings.VERTEX_AI_PROJECT:
     try:
         vertex_client = genai.Client(
@@ -29,9 +84,11 @@ def generate_hairstyle_visualization(original_image: Image.Image,
                                    hairstyle_name: str,
                                    hairstyle_description: str,
                                    client_attrs) -> str:
-    """Generate high-quality styling visualization using Vertex AI Imagen"""
-    if not vertex_ai_available:
-        raise Exception("Vertex AI is not initialized/available for image generation")
+    """Generate high-quality styling visualization using Vertex AI Imagen or fallback mock data"""
+    if settings.MOCK_MEDIA or not vertex_ai_available:
+        mock_img = get_mock_image(hairstyle_name)
+        print(f"DEBUG: Mocking styling image for '{hairstyle_name}' -> {mock_img}")
+        return mock_img
         
     print("DEBUG: Generating styling visualization directly (text-to-image) for originality")
     result = generate_with_vertex_ai_imagen(
@@ -101,10 +158,11 @@ def generate_with_vertex_ai_imagen(original_image: Image.Image,
 def generate_veo_video(hairstyle_name: str,
                        hairstyle_description: str,
                        client_attrs) -> str:
-    """Generate an 8-second video of the client on a runway with the new hairstyle using Veo"""
-    if not vertex_client:
-        print("DEBUG: Vertex AI client not configured. Skipping video generation.")
-        return None
+    """Generate an 8-second video of the client on a runway with the new hairstyle using Veo or fallback mock data"""
+    if settings.MOCK_MEDIA or not vertex_client:
+        mock_vid = get_mock_video(hairstyle_name)
+        print(f"DEBUG: Mocking runway video for '{hairstyle_name}' -> {mock_vid}")
+        return mock_vid
         
     gender_str = client_attrs.gender if client_attrs.gender else "model"
     ethnicity_str = f"of {client_attrs.ethnicity} ethnicity" if client_attrs.ethnicity else ""

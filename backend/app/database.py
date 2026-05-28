@@ -57,6 +57,26 @@ def init_db():
         FOREIGN KEY (consultation_id) REFERENCES client_consultations(id) ON DELETE CASCADE
     );
     """)
+
+    # Create the salon_config table for key-value configuration storage
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS salon_config (
+        config_key VARCHAR(50) PRIMARY KEY,
+        config_value TEXT
+    );
+    """)
+    
+    # Create the chatbot_sessions table for tracking current WhatsApp chatbot session states
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chatbot_sessions (
+        phone_number VARCHAR(20) PRIMARY KEY,
+        current_state INTEGER DEFAULT 0,
+        selected_service_id INTEGER,
+        selected_staff_id INTEGER,
+        selected_datetime VARCHAR(50),
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
     
     # Create a default walk-in client if clients table is empty
     cursor.execute("SELECT COUNT(*) FROM clients")
@@ -72,18 +92,45 @@ def init_db():
         """, (walkin_id,))
         print("✓ Created default Walk-in Client & profile in database")
 
+    # Ensure staff table has stylist_passcode and admin_passcode columns (migration)
+    try:
+        cursor.execute("ALTER TABLE staff ADD COLUMN stylist_passcode VARCHAR(6)")
+        cursor.execute("ALTER TABLE staff ADD COLUMN admin_passcode VARCHAR(6)")
+        conn.commit()
+    except Exception:
+        # Columns already exist or database wasn't ready
+        pass
+
     # Create default staff if staff table is empty
     cursor.execute("SELECT COUNT(*) FROM staff")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
-        INSERT INTO staff (first_name, last_name, specialty, email, phone, is_active)
-        VALUES ('Priya', 'Sharma', 'Color Specialist', 'priya@salonai.com', '9811122233', 1)
+        INSERT INTO staff (first_name, last_name, specialty, email, phone, stylist_passcode, admin_passcode, is_active)
+        VALUES ('Priya', 'Sharma', 'Color Specialist', 'priya@salonai.com', '9811122233', '111111', '222222', 1)
         """)
         cursor.execute("""
-        INSERT INTO staff (first_name, last_name, specialty, email, phone, is_active)
-        VALUES ('Rahul', 'Kumar', 'Hairstyle & Cutting Expert', 'rahul@salonai.com', '9811144455', 1)
+        INSERT INTO staff (first_name, last_name, specialty, email, phone, stylist_passcode, admin_passcode, is_active)
+        VALUES ('Rahul', 'Kumar', 'Hairstyle & Cutting Expert', 'rahul@salonai.com', '9811144455', '333333', '444444', 1)
         """)
         print("✓ Created sample staff members in database")
+
+    # Populate existing staff with passcodes if null, forcing Priya/Rahul to specific test passcodes
+    cursor.execute("SELECT id, stylist_passcode, admin_passcode FROM staff")
+    import random
+    for s_row in cursor.fetchall():
+        s_id = s_row[0]
+        s_pass = s_row[1]
+        a_pass = s_row[2]
+        if s_id == 1:
+            cursor.execute("UPDATE staff SET stylist_passcode = '111111', admin_passcode = '222222' WHERE id = 1")
+        elif s_id == 2:
+            cursor.execute("UPDATE staff SET stylist_passcode = '333333', admin_passcode = '444444' WHERE id = 2")
+        elif not s_pass or not a_pass:
+            new_s_pass = s_pass or f"{random.randint(100000, 999999)}"
+            new_a_pass = a_pass or f"{random.randint(100000, 999999)}"
+            cursor.execute("UPDATE staff SET stylist_passcode = ?, admin_passcode = ? WHERE id = ?", (new_s_pass, new_a_pass, s_id))
+    conn.commit()
+
 
     # Create default services if services table is empty
     cursor.execute("SELECT COUNT(*) FROM services")
@@ -290,20 +337,19 @@ def get_all_consultations() -> list:
     return history
 
 def get_or_create_client(first_name: str, last_name: str, phone: str) -> int:
-    """Check in a client: retrieve ID if phone number exists, otherwise create a new one"""
+    """Check in a client: retrieve ID if phone number + name matches, otherwise create a new one"""
     conn = get_db()
     cursor = conn.cursor()
     
     # Standardize phone number by stripping spaces or common characters
     clean_phone = phone.strip()
     
-    cursor.execute("SELECT id FROM clients WHERE phone = ? OR (first_name = ? AND last_name = ? AND phone = ?)", (clean_phone, first_name, last_name, clean_phone))
+    # To support multiple profiles sharing the same phone (family), match exact name and phone
+    cursor.execute("SELECT id FROM clients WHERE first_name = ? AND last_name = ? AND phone = ?", (first_name, last_name, clean_phone))
     row = cursor.fetchone()
     
     if row:
         client_id = row[0]
-        # Update name in case it changed or wasn't set correctly
-        cursor.execute("UPDATE clients SET first_name = ?, last_name = ? WHERE id = ?", (first_name, last_name, client_id))
     else:
         cursor.execute("""
         INSERT INTO clients (first_name, last_name, phone, is_active)
@@ -314,6 +360,29 @@ def get_or_create_client(first_name: str, last_name: str, phone: str) -> int:
     conn.commit()
     conn.close()
     return client_id
+
+def get_clients_by_phone(phone: str) -> list:
+    """Retrieve all clients matching a phone number (supports matching exact or last 10 digits)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    clean_phone = phone.strip()
+    # Strip common formatting like spaces, hyphens, parentheses
+    digits_only = "".join(c for c in clean_phone if c.isdigit())
+    
+    # Try exact match on cleaned phone number
+    cursor.execute("SELECT id, first_name, last_name, phone FROM clients WHERE phone = ?", (clean_phone,))
+    rows = cursor.fetchall()
+    
+    # If not found directly, try matching by comparing last 10 digits
+    if not rows and len(digits_only) >= 10:
+        last_10 = digits_only[-10:]
+        cursor.execute("SELECT id, first_name, last_name, phone FROM clients WHERE phone LIKE ?", (f"%{last_10}",))
+        rows = cursor.fetchall()
+        
+    conn.close()
+    return [dict(r) for r in rows]
+
 
 def log_style_selection(client_id: int, consultation_id: int, style_name: str) -> int:
     """Log style confirmation from recommendation card"""
@@ -418,9 +487,15 @@ def update_client_profile(client_id: int, profile_data: dict) -> bool:
     conn = get_db()
     cursor = conn.cursor()
     
-    # 1. Update clients table fields (email, phone, allergies)
+    # 1. Update clients table fields (email, phone, allergies, names)
     client_updates = []
     client_params = []
+    if 'first_name' in profile_data:
+        client_updates.append("first_name = ?")
+        client_params.append(profile_data['first_name'])
+    if 'last_name' in profile_data:
+        client_updates.append("last_name = ?")
+        client_params.append(profile_data['last_name'])
     if 'email' in profile_data:
         client_updates.append("email = ?")
         client_params.append(profile_data['email'])
@@ -472,7 +547,7 @@ def update_client_profile(client_id: int, profile_data: dict) -> bool:
     conn.close()
     return True
 
-def create_appointment_and_update_loyalty(client_id: int, appointment_date: str, consultation_id: int, total_amount: float) -> dict:
+def create_appointment_and_update_loyalty(client_id: int, appointment_date: str, consultation_id: int, total_amount: float, payment_method: str = "card", staff_id: int = None) -> dict:
     """
     Create a completed appointment, insert a matching completed transaction,
     which fires triggers to update client stats, and record earned loyalty points.
@@ -493,17 +568,18 @@ def create_appointment_and_update_loyalty(client_id: int, appointment_date: str,
         """, (total_amount,))
         service_id = cursor.lastrowid
         
-    # 2. Fetch or create a default staff member
-    cursor.execute("SELECT id FROM staff LIMIT 1")
-    staff_row = cursor.fetchone()
-    if staff_row:
-        staff_id = staff_row[0]
-    else:
-        cursor.execute("""
-        INSERT INTO staff (first_name, last_name, specialty)
-        VALUES ('Master', 'AI Stylist', 'General Hair & Style Consultant')
-        """)
-        staff_id = cursor.lastrowid
+    # 2. Assign staff member
+    if staff_id is None:
+        cursor.execute("SELECT id FROM staff LIMIT 1")
+        staff_row = cursor.fetchone()
+        if staff_row:
+            staff_id = staff_row[0]
+        else:
+            cursor.execute("""
+            INSERT INTO staff (first_name, last_name, specialty)
+            VALUES ('Master', 'AI Stylist', 'General Hair & Style Consultant')
+            """)
+            staff_id = cursor.lastrowid
         
     # 3. Create appointment with status 'scheduled'
     try:
@@ -522,8 +598,8 @@ def create_appointment_and_update_loyalty(client_id: int, appointment_date: str,
     receipt_num = f"REC-{datetime.now().strftime('%Y%m%d%H%M%S')}-{appointment_id}"
     cursor.execute("""
     INSERT INTO transactions (appointment_id, client_id, amount, payment_method, status, receipt_number)
-    VALUES (?, ?, ?, 'card', 'completed', ?)
-    """, (appointment_id, client_id, total_amount, receipt_num))
+    VALUES (?, ?, ?, ?, 'completed', ?)
+    """, (appointment_id, client_id, total_amount, payment_method, receipt_num))
     
     # 5. Update appointment status to 'completed' so that client stats trigger executes
     cursor.execute("""
@@ -810,3 +886,61 @@ def check_product_stock_and_find_alternative(product_name: str) -> dict:
         "in_stock": False,
         "substitute_found": False
     }
+
+def get_chatbot_session(phone_number: str) -> dict:
+    """Retrieve the active chatbot session state for a phone number"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM chatbot_sessions WHERE phone_number = ?", (phone_number,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def save_chatbot_session(phone_number: str, current_state: int, service_id: int = None, staff_id: int = None, datetime_str: str = None) -> None:
+    """Create or update a chatbot session state for a phone number"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM chatbot_sessions WHERE phone_number = ?", (phone_number,))
+    exists = cursor.fetchone()
+    if exists:
+        cursor.execute("""
+        UPDATE chatbot_sessions
+        SET current_state = ?, selected_service_id = ?, selected_staff_id = ?, selected_datetime = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE phone_number = ?
+        """, (current_state, service_id, staff_id, datetime_str, phone_number))
+    else:
+        cursor.execute("""
+        INSERT INTO chatbot_sessions (phone_number, current_state, selected_service_id, selected_staff_id, selected_datetime)
+        VALUES (?, ?, ?, ?, ?)
+        """, (phone_number, current_state, service_id, staff_id, datetime_str))
+    conn.commit()
+    conn.close()
+
+def delete_chatbot_session(phone_number: str) -> None:
+    """Remove a chatbot session state once completed or cancelled"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM chatbot_sessions WHERE phone_number = ?", (phone_number,))
+    conn.commit()
+    conn.close()
+
+def get_appointment_billing_details(appointment_id: int) -> dict:
+    """Retrieve detailed billing metrics for invoice rendering"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT a.id AS appointment_id, a.appointment_datetime, a.total_price,
+           c.first_name, c.last_name, c.phone,
+           s.name AS service_name, s.duration_minutes,
+           st.first_name AS stylist_first, st.last_name AS stylist_last,
+           t.receipt_number, t.payment_method
+    FROM appointments a
+    JOIN clients c ON a.client_id = c.id
+    JOIN services s ON a.service_id = s.id
+    LEFT JOIN staff st ON a.staff_id = st.id
+    LEFT JOIN transactions t ON a.id = t.appointment_id
+    WHERE a.id = ?
+    """, (appointment_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None

@@ -10,6 +10,24 @@ async def run_profiler_agent(front_bytes: bytes, left_bytes: bytes, right_bytes:
     ProfilerAgent: Analyzes the client's hair/face profile from three viewpoints (Front, Left, Right).
     Uses google-antigravity Agent with structured output response_schema.
     """
+    if settings.MOCK_MEDIA:
+        print("DEBUG: MOCK_MEDIA is active. Returning mock ClientProfileAnalysis immediately.")
+        return ClientProfileAnalysis(
+            gender="female",
+            gender_confidence=0.95,
+            face_shape="oval",
+            face_confidence=0.90,
+            hair_type="curly",
+            hair_confidence=0.88,
+            hair_length="medium",
+            skin_tone="medium",
+            skin_confidence=0.92,
+            undertone="neutral",
+            ethnicity="South Asian",
+            ethnicity_confidence=0.85,
+            notes="Client has a well-defined oval face shape with curly hair of medium length. Skin tone is medium with neutral undertones."
+        )
+
     if not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
         key_path = os.path.join(settings.BACKEND_DIR, "vertex-ai-key.json")
         if os.path.exists(key_path):

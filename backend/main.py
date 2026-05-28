@@ -33,9 +33,14 @@ app.add_middleware(
 
 # Mount the static frontend directory
 frontend_dir = os.path.join(settings.BASE_DIR, "frontend")
-if os.path.exists(frontend_dir):
-    app.mount("/frontend", StaticFiles(directory=frontend_dir), name="frontend")
-    print(f"✓ Mounted frontend directory from {frontend_dir}")
+prod_frontend_dir = os.path.join(frontend_dir, "dist")
+
+if os.path.exists(prod_frontend_dir):
+    app.mount("/frontend", StaticFiles(directory=prod_frontend_dir, html=True), name="frontend")
+    print(f"✓ Mounted production React frontend from {prod_frontend_dir}")
+elif os.path.exists(frontend_dir):
+    app.mount("/frontend", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+    print(f"✓ Mounted development frontend from {frontend_dir}")
 else:
     print(f"⚠ Frontend directory not found at {frontend_dir}")
 

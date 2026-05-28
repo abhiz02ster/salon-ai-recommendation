@@ -105,9 +105,12 @@ CREATE TABLE IF NOT EXISTS staff (
     specialty VARCHAR(100),         -- e.g., "Color Specialist", "Cutting Expert"
     hire_date DATE,
     is_active BOOLEAN DEFAULT 1,
+    stylist_passcode VARCHAR(6),
+    admin_passcode VARCHAR(6),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- Staff service capabilities (which services each staff member can perform)
 CREATE TABLE IF NOT EXISTS staff_services (

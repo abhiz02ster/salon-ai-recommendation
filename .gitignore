@@ -13,3 +13,5 @@ backend/server.log
 local_dev/
 backend/local_dev/
 frontend/local_dev/
+/local-archive
+graphify-out/

@@ -99,6 +99,8 @@ class ClientProfileResponse(BaseModel):
     style_history: List[StyleHistoryItem]
 
 class ClientProfileUpdateRequest(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     allergies: Optional[str] = None
@@ -115,6 +117,8 @@ class AppointmentCreateRequest(BaseModel):
     appointment_date: str
     consultation_id: int
     total_amount: float
+    payment_method: Optional[str] = "card"
+    staff_id: Optional[int] = None
 
 class AppointmentCreateResponse(BaseModel):
     appointment_id: int
@@ -186,3 +190,13 @@ class StockAlertResponse(BaseModel):
 
 class StockAlertListResponse(BaseModel):
     alerts: List[StockAlertResponse]
+
+class FeedbackRequest(BaseModel):
+    satisfaction_score: int
+    notes: Optional[str] = None
+
+class CampaignRequest(BaseModel):
+    message_content: str
+    filter_type: str
+    filter_value: Optional[str] = None
+    client_ids: Optional[List[int]] = None

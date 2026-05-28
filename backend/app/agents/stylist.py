@@ -3,12 +3,85 @@ import asyncio
 from typing import Optional
 from google.antigravity import Agent, LocalAgentConfig
 from app.config import settings
-from app.agents.schemas import ClientProfileAnalysis, RecommendationListModel
+from app.agents.schemas import ClientProfileAnalysis, RecommendationListModel, HairRecommendationModel
 
 async def run_stylist_agent(profile: ClientProfileAnalysis, feedback: Optional[str] = None) -> RecommendationListModel:
     """
     StylistAgent: Generates 3 custom hairstyle suggestions based on the attributes and optional hairdresser feedback.
     """
+    if settings.MOCK_MEDIA:
+        print("DEBUG: MOCK_MEDIA is active. Returning mock RecommendationListModel immediately.")
+        desc1 = "Modern Textured Tapered Fade"
+        desc2 = "Classic Curly Bob with Fringe"
+        desc3 = "Long Layers with Soft Waves"
+        
+        if feedback:
+            desc1 += f" (refined: {feedback})"
+            desc2 += f" (refined: {feedback})"
+            desc3 += f" (refined: {feedback})"
+            
+        return RecommendationListModel(
+            recommendations=[
+                HairRecommendationModel(
+                    style_name="Modern Textured Tapered Fade" if not feedback else "Refined Modern Textured Tapered Fade",
+                    description=f"A modern textured tapered fade that accentuates the oval face shape. Features soft texture on top with clean tapered sides. {feedback if feedback else ''}",
+                    suitability_score=95.0,
+                    reasoning=[
+                        "Accentuates the natural curls and texture.",
+                        "Tapered sides complement the oval face structure.",
+                        "Textured top allows for versatile styling options."
+                    ],
+                    maintenance_tips=[
+                        "Use a curling cream to define texture daily.",
+                        "Trim every 3-4 weeks to maintain the fade."
+                    ],
+                    products_needed=[
+                        "Curling Cream",
+                        "Matte Clay",
+                        "Argan Oil"
+                    ]
+                ),
+                HairRecommendationModel(
+                    style_name="Classic Curly Bob with Fringe",
+                    description=f"A classic curly bob with a light fringe that frame the face beautifully. Fits curly hair types perfectly. {feedback if feedback else ''}",
+                    suitability_score=88.0,
+                    reasoning=[
+                        "Brings out the volume of curly hair.",
+                        "Soft fringe frames the forehead nicely.",
+                        "Medium length balances the facial features."
+                    ],
+                    maintenance_tips=[
+                        "Diffuse dry on low heat to keep curls bouncy.",
+                        "Apply leave-in conditioner to prevent frizz."
+                    ],
+                    products_needed=[
+                        "Leave-in Conditioner",
+                        "Styling Gel",
+                        "Volumizing Mousse"
+                    ]
+                ),
+                HairRecommendationModel(
+                    style_name="Long Layers with Soft Waves",
+                    description=f"Long cascading layers designed to add movement and dimension to curls. {feedback if feedback else ''}",
+                    suitability_score=85.0,
+                    reasoning=[
+                        "Long layers reduce bulk and shape the curls.",
+                        "Adds beautiful movement and bounce.",
+                        "Frames the jawline elegantly."
+                    ],
+                    maintenance_tips=[
+                        "Co-wash every other day to preserve moisture.",
+                        "Deep condition weekly to protect curly ends."
+                    ],
+                    products_needed=[
+                        "Deep Conditioner",
+                        "Defining Gel",
+                        "Co-wash Conditioner"
+                    ]
+                )
+            ]
+        )
+
     if not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
         key_path = os.path.join(settings.BACKEND_DIR, "vertex-ai-key.json")
         if os.path.exists(key_path):
