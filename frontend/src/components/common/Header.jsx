@@ -139,9 +139,9 @@ const Header = ({
             </div>
 
             {/* Navigation Tabs (Admin Mode Only / Client Mode Switcher) */}
-            <div className="main-header-nav" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="main-header-nav" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {viewMode === 'admin' ? (
-                    <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.4)', padding: '4px', borderRadius: '14px', border: '1px solid var(--glass-border)', gap: '4px' }}>
+                    <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.4)', padding: '4px', borderRadius: '14px', border: '1px solid var(--glass-border)', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
                         <button 
                             className="btn" 
                             onClick={() => setCurrentTab('crm')} 
@@ -170,9 +170,23 @@ const Header = ({
                         >
                             <i className="fa-solid fa-boxes-stacked" style={{ marginRight: '6px' }}></i> Inventory Control
                         </button>
+                        <button 
+                            className="btn" 
+                            onClick={() => setCurrentTab('bookings')} 
+                            style={{ 
+                                padding: '8px 16px', 
+                                fontSize: '0.8rem', 
+                                background: currentTab === 'bookings' ? 'var(--accent-primary)' : 'transparent', 
+                                color: currentTab === 'bookings' ? 'var(--bg-primary)' : 'var(--text-bright)', 
+                                boxShadow: 'none', 
+                                borderRadius: '10px' 
+                            }}
+                        >
+                            <i className="fa-solid fa-calendar-alt" style={{ marginRight: '6px' }}></i> Bookings
+                        </button>
                     </div>
                 ) : viewMode === 'stylist' ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
                         {staffList.length > 0 && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 600 }}>Stylist:</span>

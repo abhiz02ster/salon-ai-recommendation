@@ -19,6 +19,7 @@ import ClientDirectory from './components/admin/ClientDirectory';
 import ClientProfileDetail from './components/admin/ClientProfileDetail';
 import InventoryControl from './components/admin/InventoryControl';
 import SuperAdminConsole from './components/admin/SuperAdminConsole';
+import UpcomingBookings from './components/admin/UpcomingBookings';
 
 // Client profile drawer
 import ClientProfileDrawer from './components/client/ClientProfileDrawer';
@@ -699,7 +700,7 @@ const AppContent = () => {
                     {/* View mode 2: Administrative Console viewport */}
                     {viewMode === 'admin' && (
                         <div style={{ height: '100%' }}>
-                            {adminTab === 'crm' ? (
+                            {adminTab === 'crm' && (
                                 <div className="crm-panel-grid" style={{ height: '100%' }}>
                                     <ClientDirectory 
                                         selectedClientId={selectedCrmClientId}
@@ -715,12 +716,16 @@ const AppContent = () => {
                                         }}
                                     />
                                 </div>
-                            ) : (
+                            )}
+                            {adminTab === 'inventory' && (
                                 <InventoryControl 
                                     onAlertCountChange={(count) => {
                                         setAlertsCount(count);
                                     }}
                                 />
+                            )}
+                            {adminTab === 'bookings' && (
+                                <UpcomingBookings />
                             )}
                         </div>
                     )}

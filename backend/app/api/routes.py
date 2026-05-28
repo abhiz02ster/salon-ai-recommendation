@@ -308,8 +308,8 @@ async def update_appointment_feedback(appointment_id: int, request: FeedbackRequ
                     "=================================="
                 )
                 
-                # Send WhatsApp notification using Twilio/Meta service
-                whatsapp.send_meta_whatsapp(billing['phone'], bill_body)
+                # Send WhatsApp notification using Twilio Sandbox
+                whatsapp.send_twilio_whatsapp(billing['phone'], bill_body)
                 
         return {"success": success}
     except Exception as e:
@@ -384,6 +384,132 @@ async def handle_meta_webhook(payload: dict = Body(...)):
         return {"status": "no_messages"}
     except Exception as e:
         print(f"Error handling Meta Webhook: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/twilio/webhook")
+async def handle_twilio_webhook(
+    From: str = Form(...),
+    Body: str = Form(...),
+    ProfileName: Optional[str] = Form(None)
+):
+    """
+    Webhook handler for Twilio WhatsApp incoming messages.
+    """
+    try:
+        print(f"✓ Received Twilio message from {From}: {Body}")
+        response = whatsapp.handle_chatbot_message(From, Body, ProfileName)
+        # Return empty TwiML response as our backend urllib client already dispatches replies
+        from fastapi.responses import Response
+        twiml = "<Response></Response>"
+        return Response(content=twiml, media_type="application/xml")
+    except Exception as e:
+        print(f"Error handling Twilio Webhook: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/crm/clients/{client_id}/check-in")
+async def client_visit_check_in(client_id: int):
+    """
+    Triggered when a client checks in at the salon.
+    Completes any scheduled appointments within a 2-hour window.
+    """
+    try:
+        from datetime import timedelta
+        conn = database.get_db()
+        cursor = conn.cursor()
+        
+        # Select scheduled appointments for this client
+        cursor.execute("""
+            SELECT id, appointment_datetime 
+            FROM appointments 
+            WHERE client_id = ? AND status = 'scheduled'
+        """, (client_id,))
+        rows = cursor.fetchall()
+        
+        now = datetime.now()
+        updated_ids = []
+        
+        for row in rows:
+            appt_id = row['id']
+            dt_str = row['appointment_datetime']
+            try:
+                # Try parsing formats
+                if len(dt_str) == 16:
+                    appt_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+                else:
+                    appt_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+                
+                # Check if difference is less than or equal to 2 hours
+                if abs((now - appt_dt).total_seconds()) <= 7200:
+                    cursor.execute("""
+                        UPDATE appointments 
+                        SET status = 'completed', updated_at = CURRENT_TIMESTAMP 
+                        WHERE id = ?
+                    """, (appt_id,))
+                    updated_ids.append(appt_id)
+            except Exception as ex:
+                print(f"Error parsing date during check-in: {ex}")
+                
+        conn.commit()
+        conn.close()
+        return {"success": True, "auto_completed_appointments": updated_ids}
+    except Exception as e:
+        print(f"Error in client check-in status sync: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/api/crm/appointments/upcoming")
+async def get_upcoming_appointments():
+    """
+    Retrieves all active scheduled appointments.
+    First cleans up missed appointments (scheduled, but past by >2 hours) as 'no_show'.
+    """
+    try:
+        from datetime import timedelta
+        conn = database.get_db()
+        cursor = conn.cursor()
+        
+        # 1. Clean up missed scheduled appointments
+        cursor.execute("SELECT id, appointment_datetime FROM appointments WHERE status = 'scheduled'")
+        rows = cursor.fetchall()
+        now = datetime.now()
+        
+        for row in rows:
+            appt_id = row['id']
+            dt_str = row['appointment_datetime']
+            try:
+                if len(dt_str) == 16:
+                    appt_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+                else:
+                    appt_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+                
+                # If missed by more than 2 hours, mark as no_show
+                if now - appt_dt > timedelta(hours=2):
+                    cursor.execute("""
+                        UPDATE appointments 
+                        SET status = 'no_show', updated_at = CURRENT_TIMESTAMP 
+                        WHERE id = ?
+                    """, (appt_id,))
+            except Exception as ex:
+                print(f"Error parsing date during cleanup: {ex}")
+        conn.commit()
+        
+        # 2. Query remaining active scheduled appointments
+        cursor.execute("""
+            SELECT a.id, a.appointment_datetime, a.total_price,
+                   c.id AS client_id, c.first_name, c.last_name, c.phone,
+                   s.name AS service_name,
+                   st.first_name AS stylist_first, st.last_name AS stylist_last
+            FROM appointments a
+            JOIN clients c ON a.client_id = c.id
+            JOIN services s ON a.service_id = s.id
+            LEFT JOIN staff st ON a.staff_id = st.id
+            WHERE a.status = 'scheduled'
+            ORDER BY a.appointment_datetime ASC
+        """)
+        upcoming = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        return upcoming
+    except Exception as e:
+        print(f"Error getting upcoming appointments: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/api/crm/whatsapp/campaign")
@@ -665,8 +791,8 @@ async def run_promotional_campaign(request: CampaignRequest):
             msg = msg.replace("{salon_name}", salon_name)
             msg = msg.replace("{booking_url}", f"http://localhost:3000/?mode=stylist")
             
-            # Send WhatsApp message (Mock dispatch handles print statements if credentials are not configured)
-            success = whatsapp.send_meta_whatsapp(client["phone"], msg)
+            # Send WhatsApp message via Twilio Sandbox
+            success = whatsapp.send_twilio_whatsapp(client["phone"], msg)
             if success:
                 sent_count += 1
                 

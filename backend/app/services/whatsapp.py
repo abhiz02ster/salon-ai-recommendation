@@ -3,7 +3,7 @@ import urllib.request
 import urllib.parse
 import json
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 import app.database as database
 
 # Retrieve credentials
@@ -102,9 +102,86 @@ def send_meta_whatsapp(to_number: str, body: str) -> bool:
         print(f"⚠ Error sending Meta message: {e}")
         return False
 
+def send_reply(to_number: str, body: str) -> bool:
+    """
+    Sends outbound WhatsApp message using Twilio or Meta based on sender prefix.
+    If to_number starts with "whatsapp:", routes via Twilio Sandbox.
+    """
+    if to_number.startswith("whatsapp:"):
+        return send_twilio_whatsapp(to_number, body)
+    else:
+        return send_meta_whatsapp(to_number, body)
+
+def get_available_slots(staff_id: int = None, limit: int = 3) -> list:
+    """
+    Generates 3 prospective appointment slots for the next 3 days.
+    Checks and filters out slots that overlap with any scheduled or completed bookings.
+    """
+    slots = []
+    current_time = datetime.now() + timedelta(hours=1)
+    
+    # Round current_time to next 30 minutes
+    if current_time.minute < 30:
+        current_time = current_time.replace(minute=30, second=0, microsecond=0)
+    else:
+        current_time = (current_time + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        
+    conn = database.get_db()
+    cursor = conn.cursor()
+    
+    # Fetch all appointments for the next 3 days
+    query = """
+        SELECT appointment_datetime 
+        FROM appointments 
+        WHERE (status = 'scheduled' OR status = 'completed') 
+    """
+    params = []
+    if staff_id:
+        query += " AND staff_id = ?"
+        params.append(staff_id)
+    
+    cursor.execute(query, params)
+    appointments = []
+    for r in cursor.fetchall():
+        dt_str = r['appointment_datetime']
+        try:
+            if len(dt_str) == 16:
+                appt_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+            else:
+                appt_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+            appointments.append(appt_dt)
+        except Exception:
+            pass
+            
+    conn.close()
+    
+    # Try slots for the next 3 days
+    for day in range(3):
+        start_hour = 9 if day > 0 else max(9, current_time.hour)
+        test_date = datetime.now() + timedelta(days=day)
+        
+        for hour in range(start_hour, 20):
+            for minute in [0, 30]:
+                slot_time = test_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                if slot_time < datetime.now() + timedelta(minutes=45):
+                    continue
+                
+                # Check overlap (assume 1-hour service duration)
+                overlap = False
+                for appt_time in appointments:
+                    if abs((slot_time - appt_time).total_seconds()) < 3600:
+                        overlap = True
+                        break
+                
+                if not overlap:
+                    slots.append(slot_time)
+                    if len(slots) >= limit:
+                        return slots
+    return slots
+
 def handle_chatbot_message(from_number: str, message_text: str, client_name: str = None) -> str:
     """
-    Dialogue Engine State Machine for Meta WhatsApp Chatbot.
+    Dialogue Engine State Machine for Meta/Twilio WhatsApp Chatbot.
     States:
       - 0: Greeting & Service selection catalog list
       - 1: Stylist selection catalog list
@@ -118,7 +195,7 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
     if lower_input in ["restart", "cancel", "reset"]:
         database.delete_chatbot_session(from_number)
         reply = "Booking session reset. Send 'hello' to start booking an appointment again!"
-        send_meta_whatsapp(from_number, reply)
+        send_reply(from_number, reply)
         return reply
         
     session = database.get_chatbot_session(from_number)
@@ -134,7 +211,7 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
         
         if not services:
             reply = "Welcome to Master Stylist Salon! Unfortunately, we are not offering any services at the moment."
-            send_meta_whatsapp(from_number, reply)
+            send_reply(from_number, reply)
             return reply
             
         # Build service options list
@@ -152,7 +229,7 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
         
         # Save state 0 in database
         database.save_chatbot_session(from_number, current_state=0)
-        send_meta_whatsapp(from_number, reply)
+        send_reply(from_number, reply)
         return reply
         
     current_state = session["current_state"]
@@ -175,7 +252,7 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
             
         if selected_idx is None:
             reply = "Invalid service selection. Please select by replying with a valid number from the list."
-            send_meta_whatsapp(from_number, reply)
+            send_reply(from_number, reply)
             return reply
             
         selected_service = services[selected_idx]
@@ -207,7 +284,7 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
             current_state=1, 
             service_id=selected_service['id']
         )
-        send_meta_whatsapp(from_number, reply)
+        send_reply(from_number, reply)
         return reply
         
     # State 1 -> Transitioning to State 2 (DateTime selection)
@@ -232,14 +309,20 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
             
         if selected_idx is None and not is_any_stylist:
             reply = "Invalid stylist selection. Please reply with a valid number from the list."
-            send_meta_whatsapp(from_number, reply)
+            send_reply(from_number, reply)
             return reply
             
         selected_staff_id = None if is_any_stylist else staff_members[selected_idx]['id']
         
+        # Generate available slots
+        slots = get_available_slots(selected_staff_id)
+        slots_text = "\n".join(f"{i}. {s.strftime('%Y-%m-%d %I:%M %p')}" for i, s in enumerate(slots, 1))
+        
         reply = (
-            f"Got it! Please enter the date and time you'd like to book.\n"
-            f"Use the format YYYY-MM-DD HH:MM (e.g. 2026-05-28 15:30):"
+            f"Got it! Please select one of the following available slots for booking "
+            f"(reply with 1, 2, or 3):\n\n"
+            f"{slots_text}\n\n"
+            f"Or enter your preferred date & time manually using the format YYYY-MM-DD HH:MM (e.g. 2026-05-28 15:30):"
         )
         
         # Update session: state=2, staff_id=selected_staff_id
@@ -249,22 +332,38 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
             service_id=session["selected_service_id"],
             staff_id=selected_staff_id
         )
-        send_meta_whatsapp(from_number, reply)
+        send_reply(from_number, reply)
         return reply
         
     # State 2 -> Transitioning to State 3 (Confirmation summary)
     elif current_state == 2:
-        try:
-            # Parse datetime string validation
-            parsed_dt = datetime.strptime(clean_input, "%Y-%m-%d %H:%M")
-            if parsed_dt < datetime.now():
-                reply = "The selected datetime is in the past. Please enter a future date and time (format: YYYY-MM-DD HH:MM):"
-                send_meta_whatsapp(from_number, reply)
+        selected_dt_str = None
+        # Check if the input is a slot choice (1, 2, 3)
+        if clean_input in ["1", "2", "3"]:
+            slots = get_available_slots(session["selected_staff_id"])
+            idx = int(clean_input) - 1
+            if idx < len(slots):
+                selected_dt_str = slots[idx].strftime("%Y-%m-%d %H:%M")
+        
+        # If not a slot choice, try parsing manually
+        if not selected_dt_str:
+            try:
+                parsed_dt = datetime.strptime(clean_input, "%Y-%m-%d %H:%M")
+                if parsed_dt < datetime.now():
+                    reply = "The selected datetime is in the past. Please enter a future date and time (format: YYYY-MM-DD HH:MM):"
+                    send_reply(from_number, reply)
+                    return reply
+                selected_dt_str = clean_input
+            except ValueError:
+                slots = get_available_slots(session["selected_staff_id"])
+                slots_text = "\n".join(f"{i}. {s.strftime('%Y-%m-%d %I:%M %p')}" for i, s in enumerate(slots, 1))
+                reply = (
+                    f"Invalid input. Please reply with a number (1, 2, or 3) from the list below, "
+                    f"or enter in the format YYYY-MM-DD HH:MM (e.g. 2026-05-28 15:30):\n\n"
+                    f"{slots_text}"
+                )
+                send_reply(from_number, reply)
                 return reply
-        except ValueError:
-            reply = "Invalid date and time format. Please enter in the format YYYY-MM-DD HH:MM (e.g. 2026-05-28 15:30):"
-            send_meta_whatsapp(from_number, reply)
-            return reply
             
         # Format service name & price
         conn = database.get_db()
@@ -289,20 +388,20 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
             f"Please confirm your booking details:\n\n"
             f"✂ Service: {service_name}\n"
             f"👤 Stylist: {staff_name}\n"
-            f"📅 Date & Time: {clean_input}\n"
+            f"📅 Date & Time: {selected_dt_str}\n"
             f"💰 Price: INR {service_price:.2f}\n\n"
             f"Reply 'Y' to confirm booking or 'N' to cancel."
         )
         
-        # Update session: state=3, datetime=clean_input
+        # Update session: state=3, datetime=selected_dt_str
         database.save_chatbot_session(
             from_number,
             current_state=3,
             service_id=session["selected_service_id"],
             staff_id=session["selected_staff_id"],
-            datetime_str=clean_input
+            datetime_str=selected_dt_str
         )
-        send_meta_whatsapp(from_number, reply)
+        send_reply(from_number, reply)
         return reply
         
     # State 3 -> Confirmation execution and booking write
@@ -320,8 +419,11 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
                 else:
                     last_name = f"({from_number})"
                     
-            # Get or create client ID
-            client_id = database.get_or_create_client(first_name, last_name, from_number)
+            # Get or create client ID (removing "whatsapp:" prefix if present)
+            crm_phone = from_number
+            if crm_phone.startswith("whatsapp:"):
+                crm_phone = crm_phone[9:]
+            client_id = database.get_or_create_client(first_name, last_name, crm_phone)
             
             # Retrieve service base price
             conn = database.get_db()
@@ -368,18 +470,18 @@ def handle_chatbot_message(from_number: str, message_text: str, client_name: str
                 f"Date & Time: {session['selected_datetime']}\n\n"
                 f"We look forward to styling you!"
             )
-            send_meta_whatsapp(from_number, reply)
+            send_reply(from_number, reply)
             return reply
             
         elif lower_input in ["n", "no", "cancel"]:
             # Delete session and return cancel text
             database.delete_chatbot_session(from_number)
             reply = "Booking cancelled. Feel free to text 'hello' whenever you'd like to book an appointment again."
-            send_meta_whatsapp(from_number, reply)
+            send_reply(from_number, reply)
             return reply
         else:
             reply = "Invalid response. Please reply with 'Y' to confirm booking or 'N' to cancel."
-            send_meta_whatsapp(from_number, reply)
+            send_reply(from_number, reply)
             return reply
             
     return "Session state error."

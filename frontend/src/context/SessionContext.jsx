@@ -147,6 +147,20 @@ export const SessionProvider = ({ children }) => {
     // Check in a client: adds a session and focus-loads it
     const registerCheckInSession = (clientData, resumeLastSession = false) => {
         const clientId = clientData.client_id || clientData.id;
+        
+        // Sync check-in state to complete scheduled appointments within the 2-hour window
+        if (clientId) {
+            fetch(`${window.location.origin}/api/crm/clients/${clientId}/check-in`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.auto_completed_appointments && data.auto_completed_appointments.length > 0) {
+                        console.log(`✓ Automatically completed appointments on check-in: ${data.auto_completed_appointments}`);
+                        showToast("Upcoming booking checked-in and resolved.");
+                    }
+                })
+                .catch(err => console.error("Failed to sync check-in status:", err));
+        }
+
         let existingIndex = activeSessions.findIndex(s => s.clientId === clientId);
         let updatedSessions = [...activeSessions];
         let targetIndex = -1;
